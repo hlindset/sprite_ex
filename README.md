@@ -1,6 +1,6 @@
-# SpriteEx
+# SvgSpriteEx
 
-`SpriteEx` lets you turn SVG files into compile-time icon refs for Phoenix
+`SvgSpriteEx` lets you turn SVG files into compile-time icon refs for Phoenix
 components and LiveView.
 
 You can render icons in two ways:
@@ -11,12 +11,12 @@ You can render icons in two ways:
 
 ## Installation
 
-Add `sprite_ex` to your dependencies:
+Add `svg_sprite_ex` to your dependencies:
 
 ```elixir
 def deps do
   [
-    {:sprite_ex, "~> 0.1.0"}
+    {:svg_sprite_ex, "~> 0.1.0"}
   ]
 end
 ```
@@ -30,7 +30,7 @@ def project do
     app: :my_app,
     version: "0.1.0",
     elixir: "~> 1.19",
-    compilers: Mix.compilers() ++ [:sprite_ex_icons],
+    compilers: Mix.compilers() ++ [:svg_sprite_ex_icons],
     deps: deps()
   ]
 end
@@ -41,7 +41,7 @@ end
 ```elixir
 import Config
 
-config :sprite_ex,
+config :svg_sprite_ex,
   source_root: Path.expand("../priv/icons", __DIR__),
   build_path: Path.expand("../priv/static/svgs", __DIR__),
   public_path: "/svgs"
@@ -71,10 +71,10 @@ When you run `mix compile`, the compiler:
 
 - scans compiled modules for `sprite_ref` and `inline_ref` calls
 - writes one SVG sprite sheet per sheet name into `build_path`
-- compiles a `SpriteEx.Generated.InlineIcons` module for inline SVG lookup
+- compiles a `SvgSpriteEx.Generated.InlineIcons` module for inline SVG lookup
 
 With the config above, `sprite_ref("regular/xmark")` returns a
-`%SpriteEx.SpriteRef{}` whose `href` looks like
+`%SvgSpriteEx.SpriteRef{}` whose `href` looks like
 `/svgs/sprites.svg#icon-812c65654d41`.
 
 Your application must serve the generated files from the same public path you
@@ -83,26 +83,26 @@ serve them from `/svgs`.
 
 ## Phoenix usage
 
-Use `SpriteEx` in any component, LiveView, or HTML module that renders icons:
+Use `SvgSpriteEx` in any component, LiveView, or HTML module that renders icons:
 
 ```elixir
 defmodule MyAppWeb.MyComponents do
   use Phoenix.Component
-  use SpriteEx
+  use SvgSpriteEx
 end
 ```
 
 This will import:
 
-- the `<.svg>` function component from `SpriteEx.Svg`
-- the `sprite_ref` and `inline_ref` macros from `SpriteEx.Ref`
+- the `<.svg>` function component from `SvgSpriteEx.Svg`
+- the `sprite_ref` and `inline_ref` macros from `SvgSpriteEx.Ref`
 
 ### Render using a sprite sheet
 
 ```elixir
 defmodule MyAppWeb.MyComponents do
   use Phoenix.Component
-  use SpriteEx
+  use SvgSpriteEx
 
   def close_icon(assigns) do
     ~H"""

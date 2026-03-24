@@ -1,4 +1,4 @@
-defmodule SpriteEx.Source do
+defmodule SvgSpriteEx.Source do
   @moduledoc false
 
   require Record

@@ -1,5 +1,5 @@
-defmodule SpriteEx.RefInlineFixture do
-  use SpriteEx
+defmodule SvgSpriteEx.RefInlineFixture do
+  use SvgSpriteEx
 
   def icon_ref, do: inline_ref("regular/xmark")
   def duplicate_ref, do: inline_ref("regular/xmark")

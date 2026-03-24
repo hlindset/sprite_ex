@@ -1,4 +1,4 @@
-defmodule SpriteEx.Ref do
+defmodule SvgSpriteEx.Ref do
   @moduledoc """
   Compile-time SVG ref helpers.
 
@@ -9,10 +9,10 @@ defmodule SpriteEx.Ref do
   sheet names used by the compile pipeline.
   """
 
-  alias SpriteEx.Source
-  alias SpriteEx.SpriteRef
+  alias SvgSpriteEx.Source
+  alias SvgSpriteEx.SpriteRef
 
-  @inline_registry_module SpriteEx.Generated.InlineIcons
+  @inline_registry_module SvgSpriteEx.Generated.InlineIcons
 
   @doc false
   defmacro __using__(_opts) do
@@ -22,9 +22,9 @@ defmodule SpriteEx.Ref do
       Module.register_attribute(__MODULE__, :__sprite_refs__, accumulate: true)
       Module.register_attribute(__MODULE__, :__inline_refs__, accumulate: true)
 
-      @sprite_ex_source_root SpriteEx.Config.source_root!()
-      @sprite_ex_default_sheet SpriteEx.Config.default_sheet!()
-      @sprite_ex_public_path SpriteEx.Config.public_path!()
+      @svg_sprite_ex_source_root SvgSpriteEx.Config.source_root!()
+      @svg_sprite_ex_default_sheet SvgSpriteEx.Config.default_sheet!()
+      @svg_sprite_ex_public_path SvgSpriteEx.Config.public_path!()
       @before_compile unquote(__MODULE__)
     end
   end
@@ -33,7 +33,7 @@ defmodule SpriteEx.Ref do
   Builds a sprite reference using the default sheet.
 
   This macro accepts a compile-time literal icon path such as `"regular/xmark"`
-  and returns a `%SpriteEx.SpriteRef{}` that points at the configured default
+  and returns a `%SvgSpriteEx.SpriteRef{}` that points at the configured default
   sprite sheet.
 
   ## Examples
@@ -41,7 +41,7 @@ defmodule SpriteEx.Ref do
   ```elixir
   defmodule MyAppWeb.IconComponents do
     use Phoenix.Component
-    use SpriteEx
+    use SvgSpriteEx
 
     def close_icon(assigns) do
       ~H"""
@@ -61,7 +61,7 @@ defmodule SpriteEx.Ref do
   - `sheet` - the target sheet name, as a string or atom
 
   This macro accepts a compile-time literal icon path such as `"regular/xmark"`
-  and returns a `%SpriteEx.SpriteRef{}` that points at the specified sprite
+  and returns a `%SvgSpriteEx.SpriteRef{}` that points at the specified sprite
   sheet.
 
   ## Examples
@@ -69,7 +69,7 @@ defmodule SpriteEx.Ref do
   ```elixir
   defmodule MyAppWeb.IconComponents do
     use Phoenix.Component
-    use SpriteEx
+    use SvgSpriteEx
 
     def dashboard_icon(assigns) do
       ~H"""
@@ -87,14 +87,14 @@ defmodule SpriteEx.Ref do
   Builds an inline SVG reference.
 
   This macro accepts a compile-time literal icon path such as `"regular/xmark"`
-  and returns a `%SpriteEx.InlineRef{}` for use with `<.svg ref={...} />`.
+  and returns a `%SvgSpriteEx.InlineRef{}` for use with `<.svg ref={...} />`.
 
   ## Examples
 
   ```elixir
   defmodule MyAppWeb.IconComponents do
     use Phoenix.Component
-    use SpriteEx
+    use SvgSpriteEx
 
     def close_icon(assigns) do
       ~H"""
@@ -170,9 +170,9 @@ defmodule SpriteEx.Ref do
   end
 
   defp build_sprite_ref_ast(name, opts, caller) do
-    source_root = module_attribute!(caller, :sprite_ex_source_root)
-    default_sheet = module_attribute!(caller, :sprite_ex_default_sheet)
-    public_path = module_attribute!(caller, :sprite_ex_public_path)
+    source_root = module_attribute!(caller, :svg_sprite_ex_source_root)
+    default_sheet = module_attribute!(caller, :svg_sprite_ex_default_sheet)
+    public_path = module_attribute!(caller, :svg_sprite_ex_public_path)
 
     literal_name =
       expand_literal_string!(
@@ -198,7 +198,7 @@ defmodule SpriteEx.Ref do
     register_sprite_ref!(caller.module, normalized_name, normalized_sheet, source_root)
 
     quote do
-      %SpriteEx.SpriteRef{
+      %SvgSpriteEx.SpriteRef{
         name: unquote(ref.name),
         sheet: unquote(ref.sheet),
         sprite_id: unquote(ref.sprite_id),
@@ -208,7 +208,7 @@ defmodule SpriteEx.Ref do
   end
 
   defp build_inline_ref_ast(name, caller) do
-    source_root = module_attribute!(caller, :sprite_ex_source_root)
+    source_root = module_attribute!(caller, :svg_sprite_ex_source_root)
 
     literal_name =
       expand_literal_string!(
@@ -221,7 +221,7 @@ defmodule SpriteEx.Ref do
     register_inline_ref!(caller.module, normalized_name, source_root)
 
     quote do
-      %SpriteEx.InlineRef{
+      %SvgSpriteEx.InlineRef{
         name: unquote(normalized_name),
         registry: unquote(@inline_registry_module)
       }
@@ -382,6 +382,6 @@ defmodule SpriteEx.Ref do
     raise CompileError,
       file: caller.file,
       line: caller.line,
-      description: "SpriteEx.Ref macros must be used inside a module that uses SpriteEx"
+      description: "SvgSpriteEx.Ref macros must be used inside a module that uses SvgSpriteEx"
   end
 end

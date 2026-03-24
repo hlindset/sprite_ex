@@ -1,10 +1,10 @@
-defmodule SpriteEx.Config do
+defmodule SvgSpriteEx.Config do
   @moduledoc false
 
-  @source_root Application.compile_env(:sprite_ex, :source_root)
-  @build_path Application.compile_env(:sprite_ex, :build_path)
-  @public_path Application.compile_env(:sprite_ex, :public_path)
-  @default_sheet Application.compile_env(:sprite_ex, :default_sheet, "sprites")
+  @source_root Application.compile_env(:svg_sprite_ex, :source_root)
+  @build_path Application.compile_env(:svg_sprite_ex, :build_path)
+  @public_path Application.compile_env(:svg_sprite_ex, :public_path)
+  @default_sheet Application.compile_env(:svg_sprite_ex, :default_sheet, "sprites")
 
   @doc """
   Returns the source root used to resolve SVG assets.
@@ -33,31 +33,31 @@ defmodule SpriteEx.Config do
 
   defp fetch_binary!(value, key) when is_binary(value) do
     if String.trim(value) == "" do
-      raise ArgumentError, "invalid config :sprite_ex, #{key} must not be blank"
+      raise ArgumentError, "invalid config :svg_sprite_ex, #{key} must not be blank"
     end
 
     value
   end
 
   defp fetch_binary!(_value, key) do
-    raise ArgumentError, "missing config :sprite_ex, #{key}"
+    raise ArgumentError, "missing config :svg_sprite_ex, #{key}"
   end
 
   defp fetch_directory!(value, key) when is_binary(value) do
     cond do
       String.trim(value) == "" ->
-        raise ArgumentError, "invalid config :sprite_ex, #{key} must not be blank"
+        raise ArgumentError, "invalid config :svg_sprite_ex, #{key} must not be blank"
 
       File.dir?(Path.expand(value)) ->
         value
 
       true ->
         raise ArgumentError,
-              "invalid config :sprite_ex, #{key} must point to an existing directory: #{inspect(value)}"
+              "invalid config :svg_sprite_ex, #{key} must point to an existing directory: #{inspect(value)}"
     end
   end
 
   defp fetch_directory!(_value, key) do
-    raise ArgumentError, "missing config :sprite_ex, #{key}"
+    raise ArgumentError, "missing config :svg_sprite_ex, #{key}"
   end
 end

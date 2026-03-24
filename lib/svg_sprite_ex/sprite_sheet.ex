@@ -1,7 +1,7 @@
-defmodule SpriteEx.SpriteSheet do
+defmodule SvgSpriteEx.SpriteSheet do
   @moduledoc false
 
-  alias SpriteEx.Source
+  alias SvgSpriteEx.Source
 
   @passthrough_attribute_exclusions MapSet.new(["height", "viewBox", "width", "xmlns"])
 

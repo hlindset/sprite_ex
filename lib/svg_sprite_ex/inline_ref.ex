@@ -1,4 +1,4 @@
-defmodule SpriteEx.InlineRef do
+defmodule SvgSpriteEx.InlineRef do
   @moduledoc """
   Compile-time inline SVG reference.
 

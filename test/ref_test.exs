@@ -1,10 +1,10 @@
-defmodule SpriteEx.RefTest do
+defmodule SvgSpriteEx.RefTest do
   use ExUnit.Case
 
-  alias SpriteEx.InlineRef
-  alias SpriteEx.Config
-  alias SpriteEx.Ref
-  alias SpriteEx.SpriteRef
+  alias SvgSpriteEx.InlineRef
+  alias SvgSpriteEx.Config
+  alias SvgSpriteEx.Ref
+  alias SvgSpriteEx.SpriteRef
 
   test "sprite_ref/2 returns a sprite ref and registers sorted unique refs" do
     module = unique_module(:sheeted_fixture)
@@ -40,7 +40,7 @@ defmodule SpriteEx.RefTest do
 
     assert %InlineRef{} = ref
     assert ref.name == "regular/xmark"
-    assert ref.registry == SpriteEx.Generated.InlineIcons
+    assert ref.registry == SvgSpriteEx.Generated.InlineIcons
     assert module.__inline_refs__() == ["regular/xmark"]
   end
 
@@ -130,10 +130,10 @@ defmodule SpriteEx.RefTest do
   end
 
   test "sprite_ref raises a compile error outside a module context" do
-    assert_raise CompileError, ~r/must be used inside a module that uses SpriteEx/, fn ->
+    assert_raise CompileError, ~r/must be used inside a module that uses SvgSpriteEx/, fn ->
       Code.eval_string("""
-      require SpriteEx.Ref
-      SpriteEx.Ref.sprite_ref("regular/xmark")
+      require SvgSpriteEx.Ref
+      SvgSpriteEx.Ref.sprite_ref("regular/xmark")
       """)
     end
   end
@@ -191,12 +191,12 @@ defmodule SpriteEx.RefTest do
   test "sprite_ref raises a compile error when the source asset cannot be read" do
     module = unique_module(:unreadable_asset)
 
-    with_unreadable_asset_source_root("sprite_ex_unreadable_source", fn source_root ->
+    with_unreadable_asset_source_root("svg_sprite_ex_unreadable_source", fn source_root ->
       assert_raise CompileError, ~r/could not read file/, fn ->
         compile_module!(module, """
-        @sprite_ex_source_root #{inspect(source_root)}
-        @sprite_ex_default_sheet "sprites"
-        @sprite_ex_public_path "/assets/sprites"
+        @svg_sprite_ex_source_root #{inspect(source_root)}
+        @svg_sprite_ex_default_sheet "sprites"
+        @svg_sprite_ex_public_path "/assets/sprites"
 
         def ref, do: sprite_ref("regular/xmark")
         """)
@@ -207,12 +207,12 @@ defmodule SpriteEx.RefTest do
   test "inline_ref raises a compile error when the source asset cannot be read" do
     module = unique_module(:unreadable_inline_asset)
 
-    with_unreadable_asset_source_root("sprite_ex_unreadable_inline_source", fn source_root ->
+    with_unreadable_asset_source_root("svg_sprite_ex_unreadable_inline_source", fn source_root ->
       assert_raise CompileError, ~r/could not read file/, fn ->
         compile_module!(module, """
-        @sprite_ex_source_root #{inspect(source_root)}
-        @sprite_ex_default_sheet "sprites"
-        @sprite_ex_public_path "/assets/sprites"
+        @svg_sprite_ex_source_root #{inspect(source_root)}
+        @svg_sprite_ex_default_sheet "sprites"
+        @svg_sprite_ex_public_path "/assets/sprites"
 
         def ref, do: inline_ref("regular/xmark")
         """)
@@ -233,14 +233,14 @@ defmodule SpriteEx.RefTest do
   defp compile_module!(module, body) do
     path =
       System.tmp_dir!()
-      |> Path.join("sprite_ex_ref_test_#{System.unique_integer([:positive])}.exs")
+      |> Path.join("svg_sprite_ex_ref_test_#{System.unique_integer([:positive])}.exs")
       |> Path.expand()
 
     File.write!(
       path,
       """
       defmodule #{inspect(module)} do
-        use SpriteEx
+        use SvgSpriteEx
 
         #{body}
       end
@@ -257,7 +257,7 @@ defmodule SpriteEx.RefTest do
   end
 
   defp unique_module(suffix) do
-    Module.concat([SpriteEx, RefFixtures, :"#{suffix}_#{System.unique_integer([:positive])}"])
+    Module.concat([SvgSpriteEx, RefFixtures, :"#{suffix}_#{System.unique_integer([:positive])}"])
   end
 
   defp with_unreadable_asset_source_root(prefix, fun) when is_function(fun, 1) do

@@ -1,5 +1,5 @@
-defmodule SpriteEx.RefSheetedFixture do
-  use SpriteEx
+defmodule SvgSpriteEx.RefSheetedFixture do
+  use SvgSpriteEx
 
   def ui_ref, do: sprite_ref("regular/xmark", sheet: " UI Actions ")
   def duplicate_ref, do: sprite_ref("regular/xmark", sheet: "ui_actions")

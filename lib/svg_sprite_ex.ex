@@ -1,23 +1,23 @@
-defmodule SpriteEx do
+defmodule SvgSpriteEx do
   @moduledoc """
-  Public entrypoint for SpriteEx in Phoenix component modules.
+  Public entrypoint for SvgSpriteEx in Phoenix component modules.
 
-  `use SpriteEx` imports:
+  `use SvgSpriteEx` imports:
 
-  - the `<.svg>` component from `SpriteEx.Svg`
+  - the `<.svg>` component from `SvgSpriteEx.Svg`
   - the `sprite_ref/1`, `sprite_ref/2`, and `inline_ref/1` macros from
-    `SpriteEx.Ref`
+    `SvgSpriteEx.Ref`
   """
 
   @doc ~S'''
-  Imports the SpriteEx component and compile-time ref helpers into the caller.
+  Imports the SvgSpriteEx component and compile-time ref helpers into the caller.
 
   ## Examples
 
   ```elixir
   defmodule MyAppWeb.IconComponents do
     use Phoenix.Component
-    use SpriteEx
+    use SvgSpriteEx
 
     def close_icon(assigns) do
       ~H"""
@@ -29,8 +29,8 @@ defmodule SpriteEx do
   '''
   defmacro __using__(_opts) do
     quote do
-      import SpriteEx.Svg
-      use SpriteEx.Ref
+      import SvgSpriteEx.Svg
+      use SvgSpriteEx.Ref
     end
   end
 end
