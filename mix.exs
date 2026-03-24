@@ -1,14 +1,14 @@
-defmodule SpriteEx.MixProject do
+defmodule SvgSpriteEx.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/hlindset/sprite_ex"
+  @source_url "https://github.com/hlindset/svg_sprite_ex"
 
   def project do
     [
-      app: :sprite_ex,
+      app: :svg_sprite_ex,
       version: @version,
-      name: "SpriteEx",
+      name: "SvgSpriteEx",
       description: description(),
       package: package(),
       docs: docs(),
@@ -74,8 +74,8 @@ defmodule SpriteEx.MixProject do
       source_ref: "v#{@version}",
       extras: ["README.md", "CHANGELOG.md"],
       groups_for_modules: [
-        "Primary API": [SpriteEx, SpriteEx.Ref, SpriteEx.Svg],
-        "Ref Types": [SpriteEx.InlineRef, SpriteEx.SpriteRef]
+        "Primary API": [SvgSpriteEx, SvgSpriteEx.Ref, SvgSpriteEx.Svg],
+        "Ref Types": [SvgSpriteEx.InlineRef, SvgSpriteEx.SpriteRef]
       ]
     ]
   end

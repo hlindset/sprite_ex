@@ -1,15 +1,15 @@
-defmodule SpriteEx.SvgTest do
+defmodule SvgSpriteEx.SvgTest do
   use ExUnit.Case
   use Phoenix.Component
-  use SpriteEx
+  use SvgSpriteEx
 
   import Phoenix.LiveViewTest, only: [render_component: 2]
 
-  alias SpriteEx.InlineRef
-  alias SpriteEx.Svg
+  alias SvgSpriteEx.InlineRef
+  alias SvgSpriteEx.Svg
 
   defmodule InlineRegistryFixture do
-    alias SpriteEx.InlineAsset
+    alias SvgSpriteEx.InlineAsset
 
     def fetch("icons/alert") do
       {:ok,
@@ -27,16 +27,16 @@ defmodule SpriteEx.SvgTest do
   end
 
   test "loads the module" do
-    assert Code.ensure_loaded?(SpriteEx)
+    assert Code.ensure_loaded?(SvgSpriteEx)
   end
 
-  test "use SpriteEx imports svg rendering and sprite refs" do
+  test "use SvgSpriteEx imports svg rendering and sprite refs" do
     html = render_component(&sprite_wrapper/1, %{})
 
     assert html =~ ~s(<svg class="size-4")
 
     assert html =~
-             ~s(<use href="#{SpriteEx.Ref.sprite_href("regular/xmark", "/test/fixtures/icons", SpriteEx.Config.default_sheet!(), "/assets/sprites")}")
+             ~s(<use href="#{SvgSpriteEx.Ref.sprite_href("regular/xmark", "/test/fixtures/icons", SvgSpriteEx.Config.default_sheet!(), "/assets/sprites")}")
 
     refute html =~ "aria-hidden"
   end

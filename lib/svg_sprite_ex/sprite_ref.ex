@@ -1,4 +1,4 @@
-defmodule SpriteEx.SpriteRef do
+defmodule SvgSpriteEx.SpriteRef do
   @moduledoc """
   Compile-time sprite-backed SVG reference.
 

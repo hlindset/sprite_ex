@@ -1,7 +1,7 @@
-defmodule SpriteEx.SourceTest do
+defmodule SvgSpriteEx.SourceTest do
   use ExUnit.Case, async: true
 
-  alias SpriteEx.Source
+  alias SvgSpriteEx.Source
 
   test "read!/2 returns parsed source data" do
     svg_source_root = unique_tmp_dir!("read")
@@ -187,7 +187,7 @@ defmodule SpriteEx.SourceTest do
   defp unique_tmp_dir!(suffix) do
     path =
       System.tmp_dir!()
-      |> Path.join("sprite_ex_test_#{suffix}_#{System.unique_integer([:positive])}")
+      |> Path.join("svg_sprite_ex_test_#{suffix}_#{System.unique_integer([:positive])}")
       |> Path.expand()
 
     File.mkdir_p!(path)

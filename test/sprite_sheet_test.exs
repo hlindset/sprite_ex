@@ -1,8 +1,8 @@
-defmodule SpriteEx.SpriteSheetTest do
+defmodule SvgSpriteEx.SpriteSheetTest do
   use ExUnit.Case, async: true
 
-  alias SpriteEx.Source
-  alias SpriteEx.SpriteSheet
+  alias SvgSpriteEx.Source
+  alias SvgSpriteEx.SpriteSheet
 
   test "build escapes viewBox values in generated symbols" do
     svg_source_root = unique_tmp_dir!("view-box")
@@ -122,7 +122,7 @@ defmodule SpriteEx.SpriteSheetTest do
   defp unique_tmp_dir!(suffix) do
     path =
       System.tmp_dir!()
-      |> Path.join("sprite_ex_test_#{suffix}_#{System.unique_integer([:positive])}")
+      |> Path.join("svg_sprite_ex_test_#{suffix}_#{System.unique_integer([:positive])}")
       |> Path.expand()
 
     File.mkdir_p!(path)

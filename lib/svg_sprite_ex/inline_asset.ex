@@ -1,4 +1,4 @@
-defmodule SpriteEx.InlineAsset do
+defmodule SvgSpriteEx.InlineAsset do
   @moduledoc false
 
   @enforce_keys [:attributes, :inner_content]

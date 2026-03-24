@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Compile.SpriteExIcons do
+defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   @moduledoc false
 
   use Mix.Task.Compiler
@@ -7,12 +7,12 @@ defmodule Mix.Tasks.Compile.SpriteExIcons do
   @shortdoc "Builds application SVG sprite sheets"
   @manifest_vsn 1
 
-  alias SpriteEx.Config
-  alias SpriteEx.Ref
-  alias SpriteEx.Source
-  alias SpriteEx.SpriteSheet
+  alias SvgSpriteEx.Config
+  alias SvgSpriteEx.Ref
+  alias SvgSpriteEx.Source
+  alias SvgSpriteEx.SpriteSheet
 
-  @inline_registry_module SpriteEx.Generated.InlineIcons
+  @inline_registry_module SvgSpriteEx.Generated.InlineIcons
 
   @impl Mix.Task.Compiler
   def run(_args) do
@@ -337,7 +337,7 @@ defmodule Mix.Tasks.Compile.SpriteExIcons do
       defmodule unquote(inline_registry_module) do
         @moduledoc false
 
-        alias SpriteEx.InlineAsset
+        alias SvgSpriteEx.InlineAsset
 
         unquote_splicing(external_resource_asts)
 
@@ -366,13 +366,13 @@ defmodule Mix.Tasks.Compile.SpriteExIcons do
   defp compiler_manifest_path(elixir_manifest_path) do
     elixir_manifest_path
     |> Path.dirname()
-    |> Path.join("compile.sprite_ex_icons")
+    |> Path.join("compile.svg_sprite_ex_assets")
   end
 
   defp generated_source_path(elixir_manifest_path) do
     elixir_manifest_path
     |> Path.dirname()
-    |> Path.join("sprite_ex_generated_inline_icons.ex")
+    |> Path.join("svg_sprite_ex_generated_inline_icons.ex")
   end
 
   defp unload_generated_module(inline_registry_module) do
