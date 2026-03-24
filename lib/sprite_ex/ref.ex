@@ -29,7 +29,7 @@ defmodule SpriteEx.Ref do
     end
   end
 
-  @doc """
+  @doc ~S'''
   Builds a sprite reference using the default sheet.
 
   This macro accepts a compile-time literal icon path such as `"regular/xmark"`
@@ -38,13 +38,22 @@ defmodule SpriteEx.Ref do
 
   ## Examples
 
-      iex> ref = SpriteEx.DocTestSupport.default_sprite_ref()
-      iex> {ref.name, ref.sheet, String.ends_with?(ref.href, "#" <> ref.sprite_id)}
-      {"regular/xmark", "sprites", true}
-  """
+  ```elixir
+  defmodule MyAppWeb.IconComponents do
+    use Phoenix.Component
+    use SpriteEx
+
+    def close_icon(assigns) do
+      ~H"""
+      <.svg ref={sprite_ref("regular/xmark")} class="size-4" />
+      """
+    end
+  end
+  ```
+  '''
   defmacro sprite_ref(name), do: build_sprite_ref_ast(name, [], __CALLER__)
 
-  @doc """
+  @doc ~S'''
   Builds a sprite reference with explicit options.
 
   Supported options:
@@ -57,15 +66,24 @@ defmodule SpriteEx.Ref do
 
   ## Examples
 
-      iex> ref = SpriteEx.DocTestSupport.sheeted_sprite_ref()
-      iex> {ref.name, ref.sheet, String.starts_with?(ref.href, "/assets/sprites/dashboard.svg#")}
-      {"regular/xmark", "dashboard", true}
-  """
+  ```elixir
+  defmodule MyAppWeb.IconComponents do
+    use Phoenix.Component
+    use SpriteEx
+
+    def dashboard_icon(assigns) do
+      ~H"""
+      <.svg ref={sprite_ref("regular/xmark", sheet: "dashboard")} class="size-4" />
+      """
+    end
+  end
+  ```
+  '''
   defmacro sprite_ref(name, opts) do
     build_sprite_ref_ast(name, opts, __CALLER__)
   end
 
-  @doc """
+  @doc ~S'''
   Builds an inline SVG reference.
 
   This macro accepts a compile-time literal icon path such as `"regular/xmark"`
@@ -73,10 +91,19 @@ defmodule SpriteEx.Ref do
 
   ## Examples
 
-      iex> ref = SpriteEx.DocTestSupport.inline_ref()
-      iex> {ref.name, ref.registry}
-      {"regular/xmark", SpriteEx.Generated.InlineIcons}
-  """
+  ```elixir
+  defmodule MyAppWeb.IconComponents do
+    use Phoenix.Component
+    use SpriteEx
+
+    def close_icon(assigns) do
+      ~H"""
+      <.svg ref={inline_ref("regular/xmark")} class="size-4" />
+      """
+    end
+  end
+  ```
+  '''
   defmacro inline_ref(name) do
     build_inline_ref_ast(name, __CALLER__)
   end

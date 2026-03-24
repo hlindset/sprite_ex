@@ -9,20 +9,24 @@ defmodule SpriteEx do
     `SpriteEx.Ref`
   """
 
-  @doc """
+  @doc ~S'''
   Imports the SpriteEx component and compile-time ref helpers into the caller.
 
   ## Examples
 
-      defmodule MyAppWeb.IconComponents do
-        use Phoenix.Component
-        use SpriteEx
+  ```elixir
+  defmodule MyAppWeb.IconComponents do
+    use Phoenix.Component
+    use SpriteEx
 
-        def close_icon(assigns) do
-          ~H"<.svg ref={sprite_ref(\"regular/xmark\")} class=\"size-4\" />"
-        end
-      end
-  """
+    def close_icon(assigns) do
+      ~H"""
+      <.svg ref={sprite_ref("regular/xmark")} class="size-4" />
+      """
+    end
+  end
+  ```
+  '''
   defmacro __using__(_opts) do
     quote do
       import SpriteEx.Svg
