@@ -64,7 +64,7 @@ defmodule SpriteEx.MixProject do
         "GitHub" => @source_url,
         "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
       },
-      files: ~w(.formatter.exs CHANGELOG.md LICENSE README.md guides lib mix.exs)
+      files: ~w(.formatter.exs CHANGELOG.md LICENSE README.md lib mix.exs)
     ]
   end
 
@@ -72,7 +72,7 @@ defmodule SpriteEx.MixProject do
     [
       main: "readme",
       source_ref: "main",
-      extras: ["README.md", "guides/getting_started.md", "CHANGELOG.md"],
+      extras: ["README.md", "CHANGELOG.md"],
       groups_for_modules: [
         "Entry Points": [SpriteEx, SpriteEx.Ref, SpriteEx.Svg],
         "Reference Types": [SpriteEx.InlineRef, SpriteEx.SpriteRef]

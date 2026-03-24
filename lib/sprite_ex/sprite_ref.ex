@@ -2,8 +2,8 @@ defmodule SpriteEx.SpriteRef do
   @moduledoc """
   Compile-time sprite-backed SVG reference.
 
-  `sprite_ref/1` and `sprite_ref/2` return this struct for consumption by
-  `<.svg>`.
+  `sprite_ref/1` and `sprite_ref/2` return this struct for the `<.svg>`
+  component.
   """
 
   @enforce_keys [:name, :sheet, :sprite_id, :href]

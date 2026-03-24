@@ -2,7 +2,7 @@ defmodule SpriteEx.InlineRef do
   @moduledoc """
   Compile-time inline SVG reference.
 
-  `inline_ref/1` returns this struct for consumption by `<.svg>`.
+  `inline_ref/1` returns this struct for the `<.svg>` component.
   """
 
   @enforce_keys [:name, :registry]
