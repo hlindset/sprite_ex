@@ -1,0 +1,62 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: 1.17.3-otp-25
+            erlang: 25.3.2.21
+          - elixir: 1.17.3-otp-26
+            erlang: 26.2.5.18
+          - elixir: 1.17.3-otp-27
+            erlang: 27.3.4.9
+          - elixir: 1.18.4-otp-25
+            erlang: 25.3.2.21
+          - elixir: 1.18.4-otp-26
+            erlang: 26.2.5.18
+          - elixir: 1.18.4-otp-27
+            erlang: 27.3.4.9
+          - elixir: 1.18.4-otp-28
+            erlang: 28.4.1
+          - elixir: 1.19.5-otp-26
+            erlang: 26.2.5.18
+          - elixir: 1.19.5-otp-27
+            erlang: 27.3.4.9
+          - elixir: 1.19.5-otp-28
+            erlang: 28.4.1
+          - elixir: 1.20.0-rc.3-otp-26
+            erlang: 26.2.5.18
+          - elixir: 1.20.0-rc.3-otp-27
+            erlang: 27.3.4.9
+          - elixir: 1.20.0-rc.3-otp-28
+            erlang: 28.4.1
+    name: Elixir ${{ matrix.elixir }} / OTP ${{ matrix.erlang }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+        with:
+          mise_toml: |
+            [tools]
+            erlang = "${{ matrix.erlang }}"
+            elixir = "${{ matrix.elixir }}"
+      - run: elixir --version
+      - run: mix local.hex --force
+      - run: mix local.rebar --force
+      - run: mix deps.get
+      - run: mix compile --warnings-as-errors
+        env:
+          MIX_ENV: test
+      - run: mix format --check-formatted
+        env:
+          MIX_ENV: test
+      - run: mix test --no-compile
+        env:
+          MIX_ENV: test
