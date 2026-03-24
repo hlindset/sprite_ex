@@ -8,12 +8,12 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   @manifest_vsn 1
 
   alias SvgSpriteEx.Config
-  alias SvgSpriteEx.InlineSvgInfo
+  alias SvgSpriteEx.InlineSvgMeta
   alias SvgSpriteEx.Ref
   alias SvgSpriteEx.Source
-  alias SvgSpriteEx.SpriteInfo
+  alias SvgSpriteEx.SpriteMeta
   alias SvgSpriteEx.SpriteSheet
-  alias SvgSpriteEx.SpriteSheetInfo
+  alias SvgSpriteEx.SpriteSheetMeta
 
   @inline_registry_module SvgSpriteEx.Generated.InlineIcons
   @inline_metadata_module SvgSpriteEx.Generated.InlineSvgs
@@ -191,7 +191,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
       sheet_build_path = Ref.sheet_build_path(sheet, build_path)
       sheet_public_path = Ref.sheet_public_path(sheet, public_path)
 
-      sheet_info = %SpriteSheetInfo{
+      sheet_info = %SpriteSheetMeta{
         name: sheet,
         filename: Path.basename(sheet_build_path),
         build_path: sheet_build_path,
@@ -200,7 +200,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
       sprites =
         Enum.map(names, fn name ->
-          %SpriteInfo{
+          %SpriteMeta{
             name: name,
             sheet: sheet,
             source_path: Source.source_file_path!(name, source_root),
@@ -214,7 +214,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   end
 
   defp build_sprite_outputs(sprite_metadata, source_root) do
-    Enum.into(sprite_metadata, %{}, fn {%SpriteSheetInfo{build_path: build_path}, sprites} ->
+    Enum.into(sprite_metadata, %{}, fn {%SpriteSheetMeta{build_path: build_path}, sprites} ->
       {build_path, SpriteSheet.build(Enum.map(sprites, & &1.name), source_root: source_root)}
     end)
   end
@@ -227,7 +227,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
   defp build_inline_svg_infos(inline_refs, source_root) do
     Enum.map(inline_refs, fn name ->
-      %InlineSvgInfo{
+      %InlineSvgMeta{
         name: name,
         source_path: Source.source_file_path!(name, source_root)
       }
@@ -544,7 +544,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
     sprite_sheets = Enum.map(sprite_metadata, fn {sheet_info, _sprites} -> sheet_info end)
 
     sprite_sheet_clause_asts =
-      Enum.map(sprite_metadata, fn {%SpriteSheetInfo{name: name} = sheet_info, _sprites} ->
+      Enum.map(sprite_metadata, fn {%SpriteSheetMeta{name: name} = sheet_info, _sprites} ->
         sheet_info_ast = Macro.escape(sheet_info)
 
         quote do
@@ -553,7 +553,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
       end)
 
     sprites_in_sheet_clause_asts =
-      Enum.map(sprite_metadata, fn {%SpriteSheetInfo{name: name}, sprites} ->
+      Enum.map(sprite_metadata, fn {%SpriteSheetMeta{name: name}, sprites} ->
         sprites_ast = Macro.escape(sprites)
 
         quote do
@@ -567,17 +567,17 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
       defmodule unquote(sprite_metadata_module) do
         @moduledoc false
 
-        alias SvgSpriteEx.SpriteInfo
-        alias SvgSpriteEx.SpriteSheetInfo
+        alias SvgSpriteEx.SpriteMeta
+        alias SvgSpriteEx.SpriteSheetMeta
 
-        @spec sprite_sheets() :: [SpriteSheetInfo.t()]
+        @spec sprite_sheets() :: [SpriteSheetMeta.t()]
         def sprite_sheets, do: unquote(sprite_sheets_ast)
 
-        @spec sprite_sheet(String.t()) :: {:ok, SpriteSheetInfo.t()} | :error
+        @spec sprite_sheet(String.t()) :: {:ok, SpriteSheetMeta.t()} | :error
         unquote_splicing(sprite_sheet_clause_asts)
         def sprite_sheet(_name), do: :error
 
-        @spec sprites_in_sheet(String.t()) :: [SpriteInfo.t()]
+        @spec sprites_in_sheet(String.t()) :: [SpriteMeta.t()]
         unquote_splicing(sprites_in_sheet_clause_asts)
         def sprites_in_sheet(_name), do: []
       end
@@ -593,7 +593,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
   defp build_inline_metadata_registry_ast(inline_metadata_module, inline_svg_infos) do
     inline_svg_clause_asts =
-      Enum.map(inline_svg_infos, fn %InlineSvgInfo{name: name} = inline_svg_info ->
+      Enum.map(inline_svg_infos, fn %InlineSvgMeta{name: name} = inline_svg_info ->
         inline_svg_info_ast = Macro.escape(inline_svg_info)
 
         quote do
@@ -607,12 +607,12 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
       defmodule unquote(inline_metadata_module) do
         @moduledoc false
 
-        alias SvgSpriteEx.InlineSvgInfo
+        alias SvgSpriteEx.InlineSvgMeta
 
-        @spec inline_svgs() :: [InlineSvgInfo.t()]
+        @spec inline_svgs() :: [InlineSvgMeta.t()]
         def inline_svgs, do: unquote(inline_svg_infos_ast)
 
-        @spec inline_svg(String.t()) :: {:ok, InlineSvgInfo.t()} | :error
+        @spec inline_svg(String.t()) :: {:ok, InlineSvgMeta.t()} | :error
         unquote_splicing(inline_svg_clause_asts)
         def inline_svg(_name), do: :error
       end

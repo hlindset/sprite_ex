@@ -1,4 +1,4 @@
-defmodule SvgSpriteEx.InlineSvgInfo do
+defmodule SvgSpriteEx.InlineSvgMeta do
   @moduledoc """
   Metadata for one compiled inline SVG.
   """

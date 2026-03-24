@@ -77,9 +77,9 @@ defmodule SvgSpriteEx.MixProject do
         "Primary API": [SvgSpriteEx, SvgSpriteEx.Ref, SvgSpriteEx.Svg],
         "Ref Types": [SvgSpriteEx.InlineRef, SvgSpriteEx.SpriteRef],
         "Metadata Types": [
-          SvgSpriteEx.InlineSvgInfo,
-          SvgSpriteEx.SpriteInfo,
-          SvgSpriteEx.SpriteSheetInfo
+          SvgSpriteEx.InlineSvgMeta,
+          SvgSpriteEx.SpriteMeta,
+          SvgSpriteEx.SpriteSheetMeta
         ]
       ]
     ]

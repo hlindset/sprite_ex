@@ -136,24 +136,17 @@ reference, without doing runtime file reads.
 
 ```elixir
 SvgSpriteEx.sprite_sheets()
-#=> [%SvgSpriteEx.SpriteSheetInfo{...}]
+#=> [%SvgSpriteEx.SpriteSheetMeta{...}]
 
 SvgSpriteEx.sprite_sheet("dashboard")
-#=> {:ok, %SvgSpriteEx.SpriteSheetInfo{...}}
+#=> {:ok, %SvgSpriteEx.SpriteSheetMeta{...}}
 
 SvgSpriteEx.sprites_in_sheet("dashboard")
-#=> [%SvgSpriteEx.SpriteInfo{...}]
+#=> [%SvgSpriteEx.SpriteMeta{...}]
 
 SvgSpriteEx.inline_svgs()
-#=> [%SvgSpriteEx.InlineSvgInfo{...}]
+#=> [%SvgSpriteEx.InlineSvgMeta{...}]
 
 SvgSpriteEx.inline_svg("regular/xmark")
-#=> {:ok, %SvgSpriteEx.InlineSvgInfo{...}}
+#=> {:ok, %SvgSpriteEx.InlineSvgMeta{...}}
 ```
-
-Sprite sheet metadata includes the normalized sheet name plus the generated
-filename, filesystem build path, and public path. Sprite metadata includes the
-logical sprite name, source SVG path, sprite id, and full `href`.
-
-Inline SVG metadata is intentionally minimal in v1 and includes the logical SVG
-name plus its source file path.

@@ -3,9 +3,9 @@ defmodule SvgSpriteEx.MetadataTest do
 
   alias Mix.Tasks.Compile.SvgSpriteExAssets
   alias SvgSpriteEx.Config
-  alias SvgSpriteEx.SpriteInfo
-  alias SvgSpriteEx.SpriteSheetInfo
-  alias SvgSpriteEx.InlineSvgInfo
+  alias SvgSpriteEx.InlineSvgMeta
+  alias SvgSpriteEx.SpriteMeta
+  alias SvgSpriteEx.SpriteSheetMeta
 
   test "sprite metadata APIs expose compiled sprite sheets and sprites" do
     {source_dir, manifest_path, compile_path, sprite_build_path} = runtime_fixture_paths!()
@@ -19,18 +19,18 @@ defmodule SvgSpriteEx.MetadataTest do
     compile_runtime_metadata!(manifest_path, source_dir, compile_path, sprite_build_path)
 
     assert [
-             %SpriteSheetInfo{name: "alerts", filename: "alerts.svg"},
-             %SpriteSheetInfo{name: "ui_actions", filename: "ui_actions.svg"}
+             %SpriteSheetMeta{name: "alerts", filename: "alerts.svg"},
+             %SpriteSheetMeta{name: "ui_actions", filename: "ui_actions.svg"}
            ] = SvgSpriteEx.sprite_sheets()
 
-    assert {:ok, %SpriteSheetInfo{name: "ui_actions"} = sheet_info} =
+    assert {:ok, %SpriteSheetMeta{name: "ui_actions"} = sheet_info} =
              SvgSpriteEx.sprite_sheet(:" UI Actions ")
 
     assert sheet_info.build_path == Path.join(sprite_build_path, "ui_actions.svg")
     assert sheet_info.public_path == "/assets/sprites/ui_actions.svg"
 
     assert [
-             %SpriteInfo{
+             %SpriteMeta{
                name: "regular/xmark",
                sheet: "ui_actions",
                source_path: source_path,
@@ -59,12 +59,12 @@ defmodule SvgSpriteEx.MetadataTest do
     compile_runtime_metadata!(manifest_path, source_dir, compile_path, sprite_build_path)
 
     assert [
-             %InlineSvgInfo{name: "regular/xmark", source_path: source_path}
+             %InlineSvgMeta{name: "regular/xmark", source_path: source_path}
            ] = SvgSpriteEx.inline_svgs()
 
     assert source_path == Path.join(Config.source_root!(), "regular/xmark.svg")
 
-    assert {:ok, %InlineSvgInfo{name: "regular/xmark", source_path: ^source_path}} =
+    assert {:ok, %InlineSvgMeta{name: "regular/xmark", source_path: ^source_path}} =
              SvgSpriteEx.inline_svg(" regular\\xmark ")
 
     assert SvgSpriteEx.inline_svg("regular/missing") == :error

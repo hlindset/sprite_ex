@@ -1,4 +1,4 @@
-defmodule SvgSpriteEx.SpriteSheetInfo do
+defmodule SvgSpriteEx.SpriteSheetMeta do
   @moduledoc """
   Metadata for a compiled sprite sheet.
   """
