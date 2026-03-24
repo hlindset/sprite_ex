@@ -106,6 +106,9 @@ defmodule SvgSpriteEx.MetadataTest do
   end
 
   defp compile_fixture_modules!(manifest_path, source_dir, compile_path) do
+    # Note: This intentionally uses Mix's internal compile/7 API for test
+    # infrastructure. If the signature changes on Elixir upgrade, update this
+    # helper in test/svg_sprite_ex_metadata_test.exs.
     case Mix.Compilers.Elixir.compile(
            manifest_path,
            [source_dir],
