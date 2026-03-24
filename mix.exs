@@ -64,7 +64,7 @@ defmodule SpriteEx.MixProject do
         "GitHub" => @source_url,
         "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md"
       },
-      files: ~w(.formatter.exs CHANGELOG.md LICENSE README.md lib mix.exs)
+      files: ~w(CHANGELOG.md LICENSE README.md lib mix.exs)
     ]
   end
 
