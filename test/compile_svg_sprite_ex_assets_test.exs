@@ -1,7 +1,7 @@
-defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
+defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
   use ExUnit.Case
 
-  alias Mix.Tasks.Compile.SvgSpriteExIcons
+  alias Mix.Tasks.Compile.SvgSpriteExAssets
   alias SvgSpriteEx.Config
   alias SvgSpriteEx.Ref
 
@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                elixir_manifest_path: manifest_path,
                build_path: sprite_build_path,
@@ -41,7 +41,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     assert File.exists?(stale_beam_path)
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                elixir_manifest_path: manifest_path,
                build_path: sprite_build_path,
@@ -67,7 +67,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
@@ -79,7 +79,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
@@ -107,7 +107,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
@@ -147,7 +147,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
@@ -164,7 +164,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
@@ -196,7 +196,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
@@ -220,7 +220,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     updated_inline_registry_module = unique_inline_registry_module()
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
@@ -258,7 +258,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
     assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
 
     assert :ok =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
@@ -282,7 +282,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
              ])
 
     assert :noop =
-             SvgSpriteExIcons.compile_sprite_artifacts!(
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
@@ -393,7 +393,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIconsTest do
   defp compiler_manifest_path(manifest_path) do
     manifest_path
     |> Path.dirname()
-    |> Path.join("compile.svg_sprite_ex_icons")
+    |> Path.join("compile.svg_sprite_ex_assets")
   end
 
   defp unique_module(suffix) do

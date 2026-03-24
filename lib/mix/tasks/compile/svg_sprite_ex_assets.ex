@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Compile.SvgSpriteExIcons do
+defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   @moduledoc false
 
   use Mix.Task.Compiler
@@ -366,7 +366,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExIcons do
   defp compiler_manifest_path(elixir_manifest_path) do
     elixir_manifest_path
     |> Path.dirname()
-    |> Path.join("compile.svg_sprite_ex_icons")
+    |> Path.join("compile.svg_sprite_ex_assets")
   end
 
   defp generated_source_path(elixir_manifest_path) do

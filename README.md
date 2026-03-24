@@ -30,7 +30,7 @@ def project do
     app: :my_app,
     version: "0.1.0",
     elixir: "~> 1.19",
-    compilers: Mix.compilers() ++ [:svg_sprite_ex_icons],
+    compilers: Mix.compilers() ++ [:svg_sprite_ex_assets],
     deps: deps()
   ]
 end
