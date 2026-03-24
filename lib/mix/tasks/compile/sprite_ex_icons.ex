@@ -1,7 +1,5 @@
 defmodule Mix.Tasks.Compile.SpriteExIcons do
-  @moduledoc """
-  Mix compiler task that builds application SVG sprite sheets.
-  """
+  @moduledoc false
 
   use Mix.Task.Compiler
 

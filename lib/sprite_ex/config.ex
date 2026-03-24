@@ -1,9 +1,5 @@
 defmodule SpriteEx.Config do
-  @moduledoc """
-  Compile-time configuration accessors for SpriteEx.
-
-  These helpers raise if a required `:sprite_ex` setting is missing or invalid.
-  """
+  @moduledoc false
 
   @source_root Application.compile_env(:sprite_ex, :source_root)
   @build_path Application.compile_env(:sprite_ex, :build_path)

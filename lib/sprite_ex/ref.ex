@@ -14,6 +14,11 @@ defmodule SpriteEx.Ref do
 
   @inline_registry_module SpriteEx.Generated.InlineIcons
 
+  @doc """
+  Imports the compile-time ref macros and registers the caller for SpriteEx.
+
+  This is usually brought in indirectly via `use SpriteEx`.
+  """
   defmacro __using__(_opts) do
     quote do
       import unquote(__MODULE__), only: [inline_ref: 1, sprite_ref: 1, sprite_ref: 2]
@@ -62,39 +67,24 @@ defmodule SpriteEx.Ref do
     build_inline_ref_ast(name, __CALLER__)
   end
 
-  @doc """
-  Builds the public sprite href from explicit source, sheet, and path values.
-
-  This convenience wrapper expects an explicit binary sheet name, normalizes
-  it, and then builds the final href.
-  """
+  @doc false
   def sprite_href(name, source_root, sheet, public_path) do
     "#{sheet_public_path(sheet, public_path)}##{Source.sprite_id(name, source_root)}"
   end
 
-  @doc """
-  Builds the filesystem path for a generated sprite sheet.
-
-  This convenience wrapper expects an explicit binary sheet name, normalizes
-  it, and then joins the build path.
-  """
+  @doc false
   def sheet_build_path(sheet, build_path) do
     normalized_sheet = normalize_explicit_sheet!(sheet)
     sheet_build_path_from_normalized(normalized_sheet, build_path)
   end
 
-  @doc """
-  Builds the public path for a sprite sheet file.
-
-  This convenience wrapper expects an explicit binary sheet name, normalizes
-  it, and then joins the public path.
-  """
+  @doc false
   def sheet_public_path(sheet, public_path) do
     normalized_sheet = normalize_explicit_sheet!(sheet)
     sheet_public_path_from_normalized(normalized_sheet, public_path)
   end
 
-  @doc "Normalizes a sprite sheet name using a caller-provided default."
+  @doc false
   def normalize_sheet!(sheet, default_sheet)
 
   def normalize_sheet!(nil, default_sheet), do: normalize_sheet!(default_sheet, default_sheet)

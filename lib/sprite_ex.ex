@@ -1,8 +1,24 @@
 defmodule SpriteEx do
   @moduledoc """
-  Convenience entrypoint for SVG rendering and sprite refs.
+  Public entrypoint for SpriteEx in Phoenix component modules.
+
+  `use SpriteEx` imports:
+
+  - the `<.svg>` component from `SpriteEx.Svg`
+  - the `sprite_ref/1`, `sprite_ref/2`, and `inline_ref/1` macros from
+    `SpriteEx.Ref`
   """
 
+  @doc """
+  Imports the SpriteEx component and compile-time ref helpers into the caller.
+
+  ## Examples
+
+      defmodule MyAppWeb.IconComponents do
+        use Phoenix.Component
+        use SpriteEx
+      end
+  """
   defmacro __using__(_opts) do
     quote do
       import SpriteEx.Svg

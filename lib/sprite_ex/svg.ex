@@ -21,6 +21,21 @@ defmodule SpriteEx.Svg do
   attr :ref, :any, default: nil
   attr :rest, :global
 
+  @doc """
+  Renders an SVG from a SpriteEx ref.
+
+  Pass a `SpriteEx.SpriteRef` from `sprite_ref/1` or `sprite_ref/2` to render
+  a `<use>` tag backed by a generated sprite sheet. Pass a
+  `SpriteEx.InlineRef` from `inline_ref/1` to inline the compiled SVG markup.
+
+  ## Examples
+
+      <.svg ref={sprite_ref("regular/xmark")} class="size-4" />
+
+      <.svg ref={sprite_ref("regular/xmark", sheet: "dashboard")} class="size-4" />
+
+      <.svg ref={inline_ref("regular/xmark")} class="size-4" />
+  """
   def svg(%{ref: %SpriteRef{}} = assigns) do
     assigns
     |> assign(:svg_attrs, assigns.rest)

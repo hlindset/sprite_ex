@@ -1,7 +1,5 @@
 defmodule SpriteEx.Source do
-  @moduledoc """
-  Shared SVG source resolver and parser.
-  """
+  @moduledoc false
 
   require Record
 

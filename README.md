@@ -1,6 +1,9 @@
 # SpriteEx
 
-`SpriteEx` lets you render SVG icons in your Phoenix app in two ways:
+`SpriteEx` lets you turn SVG files into compile-time icon refs for Phoenix
+components and LiveView.
+
+You can render icons in two ways:
 
 - `ref={sprite_ref("...")}` renders a `<svg><use ... /></svg>` wrapper backed
   by a generated sprite sheet
@@ -58,7 +61,7 @@ config :sprite_ex,
 Given the config above, if your icon file lives at
 `priv/icons/regular/xmark.svg`, the logical icon name is `regular/xmark`.
 
-Note that `sprite_ref`, and `inline_ref` only accept compile-time literal
+Note that `sprite_ref` and `inline_ref` only accept compile-time literal
 values. This is how the compiler discovers which icons need to be included in
 the generated outputs.
 
@@ -71,7 +74,7 @@ When you run `mix compile`, the compiler:
 - compiles a `SpriteEx.Generated.InlineIcons` module for inline SVG lookup
 
 `sprite_ref` returns a `%SpriteEx.SpriteRef{}` whose `href` points at
-`public_path/#{sheet}.svg#{sprite_id}"`.
+`#{public_path}/#{sheet}.svg##{sprite_id}`.
 
 The `sheet` option accepts either a string or an atom and is normalized to a
 lowercased sheet name.
@@ -94,7 +97,7 @@ end
 This will import:
 
 - the `<.svg>` function component from `SpriteEx.Svg`
-- the `sprite_ref`, and `inline_ref` macros from `SpriteEx.Ref`
+- the `sprite_ref` and `inline_ref` macros from `SpriteEx.Ref`
 
 ### Render from a sprite sheet
 
