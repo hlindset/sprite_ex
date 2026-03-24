@@ -43,20 +43,20 @@ import Config
 
 config :sprite_ex,
   source_root: Path.expand("../priv/icons", __DIR__),
-  build_path: Path.expand("../priv/static/sprites", __DIR__),
-  public_path: "/sprites"
+  build_path: Path.expand("../priv/static/svgs", __DIR__),
+  public_path: "/svgs"
 ```
 
 ### Required configuration
 
-- `source_root` - absolute path to the directory that contains source SVG files
-- `build_path` - absolute path where the compiler generates sprite sheets
-- `public_path` - public URL prefix for `sprite_ref/1` hrefs
+- `source_root` - absolute path to the directory that contains source SVG files.
+- `build_path` - absolute path where the compiler generates sprite sheets.
+- `public_path` - public URL prefix for `sprite_ref/1` hrefs.
 
 ### Optional configuration
 
 - `default_sheet` - default sprite sheet name when no `sheet` option is
-  given. Defaults to `sprites`
+  given. Defaults to `sprites`.
 
 Given the config above, if your icon file lives at
 `priv/icons/regular/xmark.svg`, the logical icon name is `regular/xmark`.
@@ -73,12 +73,13 @@ When you run `mix compile`, the compiler:
 - writes one SVG sprite sheet per sheet name into `build_path`
 - compiles a `SpriteEx.Generated.InlineIcons` module for inline SVG lookup
 
-`sprite_ref` returns a `%SpriteEx.SpriteRef{}` whose `href` points at
-`#{public_path}/#{sheet}.svg#{sprite_id}`.
+With the config above, `sprite_ref("regular/xmark")` returns a
+`%SpriteEx.SpriteRef{}` whose `href` looks like
+`/svgs/sprites.svg#icon-812c65654d41`.
 
 Your application must serve the generated files from the same public path you
-configured. For example: Write sprite sheets into `priv/static/sprites`, and
-serve them from `/sprites`.
+configured. For example: Write sprite sheets into `priv/static/svgs`, and
+serve them from `/svgs`.
 
 ## Phoenix usage
 
