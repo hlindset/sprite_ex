@@ -1,6 +1,9 @@
 # SpriteEx
 
-`SpriteEx` lets you render SVG icons in your Phoenix app in two ways:
+`SpriteEx` lets you turn SVG files into compile-time icon refs for Phoenix
+components and LiveView.
+
+You can render icons in two ways:
 
 - `ref={sprite_ref("...")}` renders a `<svg><use ... /></svg>` wrapper backed
   by a generated sprite sheet
@@ -40,25 +43,25 @@ import Config
 
 config :sprite_ex,
   source_root: Path.expand("../priv/icons", __DIR__),
-  build_path: Path.expand("../priv/static/sprites", __DIR__),
-  public_path: "/sprites"
+  build_path: Path.expand("../priv/static/svgs", __DIR__),
+  public_path: "/svgs"
 ```
 
-### Required keys
+### Required configuration
 
-- `source_root` - absolute path to the directory that contains source SVG files
-- `build_path` - absolute path where the compiler generates sprite sheets
-- `public_path` - public URL prefix baked into `sprite_ref/1` hrefs
+- `source_root` - absolute path to the directory that contains source SVG files.
+- `build_path` - absolute path where the compiler generates sprite sheets.
+- `public_path` - public URL prefix for `sprite_ref/1` hrefs.
 
-### Optional keys
+### Optional configuration
 
 - `default_sheet` - default sprite sheet name when no `sheet` option is
-  given. Defaults to `sprites`
+  given. Defaults to `sprites`.
 
 Given the config above, if your icon file lives at
 `priv/icons/regular/xmark.svg`, the logical icon name is `regular/xmark`.
 
-Note that `sprite_ref`, and `inline_ref` only accept compile-time literal
+Note that `sprite_ref` and `inline_ref` only accept compile-time literal
 values. This is how the compiler discovers which icons need to be included in
 the generated outputs.
 
@@ -70,15 +73,13 @@ When you run `mix compile`, the compiler:
 - writes one SVG sprite sheet per sheet name into `build_path`
 - compiles a `SpriteEx.Generated.InlineIcons` module for inline SVG lookup
 
-`sprite_ref` returns a `%SpriteEx.SpriteRef{}` whose `href` points at
-`public_path/#{sheet}.svg#{sprite_id}"`.
-
-The `sheet` option accepts either a string or an atom and is normalized to a
-lowercased sheet name.
+With the config above, `sprite_ref("regular/xmark")` returns a
+`%SpriteEx.SpriteRef{}` whose `href` looks like
+`/svgs/sprites.svg#icon-812c65654d41`.
 
 Your application must serve the generated files from the same public path you
-configured. For example: Write sprite sheets into `priv/static/sprites`, and
-serve them from `/sprites`.
+configured. For example: Write sprite sheets into `priv/static/svgs`, and
+serve them from `/svgs`.
 
 ## Phoenix usage
 
@@ -94,9 +95,9 @@ end
 This will import:
 
 - the `<.svg>` function component from `SpriteEx.Svg`
-- the `sprite_ref`, and `inline_ref` macros from `SpriteEx.Ref`
+- the `sprite_ref` and `inline_ref` macros from `SpriteEx.Ref`
 
-### Render from a sprite sheet
+### Render using a sprite sheet
 
 ```elixir
 defmodule MyAppWeb.MyComponents do
@@ -118,7 +119,7 @@ can also compile icons to other named sheets:
 <.svg ref={sprite_ref("regular/xmark", sheet: "dashboard")} class="size-4" />
 ```
 
-### Render inline SVG markup
+### Render inline SVGs
 
 Inline mode skips the sprite sheet and renders the SVG inline in the document.
 

@@ -1,7 +1,5 @@
 defmodule SpriteEx.SpriteSheet do
-  @moduledoc """
-  Builds deterministic SVG sprite sheets from configured source SVG files.
-  """
+  @moduledoc false
 
   alias SpriteEx.Source
 
