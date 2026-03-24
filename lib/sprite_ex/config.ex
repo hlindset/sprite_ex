@@ -31,7 +31,11 @@ defmodule SpriteEx.Config do
     fetch_binary!(@default_sheet, ":default_sheet")
   end
 
-  defp fetch_binary!(value, _key) when is_binary(value) do
+  defp fetch_binary!(value, key) when is_binary(value) do
+    if String.trim(value) == "" do
+      raise ArgumentError, "invalid config :sprite_ex, #{key} must not be blank"
+    end
+
     value
   end
 
