@@ -150,3 +150,35 @@ SvgSpriteEx.inline_svgs()
 SvgSpriteEx.inline_svg("regular/xmark")
 #=> %SvgSpriteEx.InlineSvgMeta{...}
 ```
+
+## Patterns
+
+### Preload a single sprite sheet
+
+When a layout or component knows it will use a specific sprite sheet, you can
+preload it by looking up the compiled sheet metadata with `sprite_sheet/1` and
+rendering a `<link rel="preload" ...>` tag.
+
+In a helper or function component:
+
+```elixir
+def sprite_sheet_preload(assigns) do
+  assigns = assign(assigns, :sheet_meta, SvgSpriteEx.sprite_sheet(assigns.sheet))
+
+  ~H"""
+  <link
+    :if={@sheet_meta}
+    rel="preload"
+    href={@sheet_meta.public_path}
+    as="image"
+    type="image/svg+xml"
+  />
+  """
+end
+```
+
+Then in a layout or page template:
+
+```elixir
+<.sprite_sheet_preload sheet="dashboard" />
+```
