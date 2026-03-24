@@ -74,8 +74,8 @@ defmodule SpriteEx.MixProject do
       source_ref: "main",
       extras: ["README.md", "CHANGELOG.md"],
       groups_for_modules: [
-        "Entry Points": [SpriteEx, SpriteEx.Ref, SpriteEx.Svg],
-        "Reference Types": [SpriteEx.InlineRef, SpriteEx.SpriteRef]
+        "Primary API": [SpriteEx, SpriteEx.Ref, SpriteEx.Svg],
+        "Ref Types": [SpriteEx.InlineRef, SpriteEx.SpriteRef]
       ]
     ]
   end
