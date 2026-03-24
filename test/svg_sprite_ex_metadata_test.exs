@@ -93,13 +93,13 @@ defmodule SvgSpriteEx.MetadataTest do
   end
 
   defp unload_generated_modules do
-    for module <- [
-          SvgSpriteEx.Generated.InlineIcons,
-          SvgSpriteEx.Generated.InlineSvgs,
-          SvgSpriteEx.Generated.SpriteSheets
-        ] do
-      :code.purge(module)
+        for module <- [
+              SvgSpriteEx.Generated.InlineIcons,
+              SvgSpriteEx.Generated.InlineSvgs,
+              SvgSpriteEx.Generated.SpriteSheets
+            ] do
       :code.delete(module)
+      :code.purge(module)
     end
 
     :ok
