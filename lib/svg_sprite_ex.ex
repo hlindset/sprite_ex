@@ -13,9 +13,14 @@ defmodule SvgSpriteEx do
   """
 
   alias SvgSpriteEx.Config
+  alias SvgSpriteEx.InlineRef
+  alias SvgSpriteEx.InlineSvgMeta
   alias SvgSpriteEx.Ref
   alias SvgSpriteEx.Source
+  alias SvgSpriteEx.SpriteMeta
+  alias SvgSpriteEx.SpriteRef
 
+  @inline_registry_module SvgSpriteEx.Generated.InlineIcons
   @sprite_sheet_registry_module SvgSpriteEx.Generated.SpriteSheets
   @inline_svg_registry_module SvgSpriteEx.Generated.InlineSvgs
 
@@ -103,6 +108,26 @@ defmodule SvgSpriteEx do
       [normalized_name],
       nil
     )
+  end
+
+  @doc """
+  Converts compiled metadata into a render-time ref.
+  """
+  @spec to_ref(SpriteMeta.t() | InlineSvgMeta.t()) :: SpriteRef.t() | InlineRef.t()
+  def to_ref(%SpriteMeta{} = sprite_meta) do
+    %SpriteRef{
+      name: sprite_meta.name,
+      sheet: sprite_meta.sheet,
+      sprite_id: sprite_meta.sprite_id,
+      href: sprite_meta.href
+    }
+  end
+
+  def to_ref(%InlineSvgMeta{} = inline_svg_meta) do
+    %InlineRef{
+      name: inline_svg_meta.name,
+      registry: @inline_registry_module
+    }
   end
 
   defp with_registry(module, function_name, args, default) do

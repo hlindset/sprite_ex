@@ -3,7 +3,9 @@ defmodule SvgSpriteEx.MetadataTest do
 
   alias Mix.Tasks.Compile.SvgSpriteExAssets
   alias SvgSpriteEx.Config
+  alias SvgSpriteEx.InlineRef
   alias SvgSpriteEx.InlineSvgMeta
+  alias SvgSpriteEx.SpriteRef
   alias SvgSpriteEx.SpriteMeta
   alias SvgSpriteEx.SpriteSheetMeta
 
@@ -71,6 +73,31 @@ defmodule SvgSpriteEx.MetadataTest do
     assert SvgSpriteEx.inline_svg("regular/missing") == nil
   end
 
+  test "metadata can be converted back into render-time refs" do
+    {source_dir, manifest_path, compile_path, sprite_build_path} = runtime_fixture_paths!()
+
+    write_sprite_fixture_module!(source_dir, unique_module(:sprite_ref_fixture), sheet: "alerts")
+
+    write_inline_fixture_module!(source_dir, unique_module(:inline_ref_fixture),
+      name: "regular/xmark"
+    )
+
+    compile_runtime_metadata!(manifest_path, source_dir, compile_path, sprite_build_path)
+
+    assert [%SpriteMeta{} = sprite_meta] = SvgSpriteEx.sprites_in_sheet("alerts")
+    assert %InlineSvgMeta{} = inline_svg_meta = SvgSpriteEx.inline_svg("regular/xmark")
+
+    assert %SpriteRef{} = sprite_ref = SvgSpriteEx.to_ref(sprite_meta)
+    assert sprite_ref.name == sprite_meta.name
+    assert sprite_ref.sheet == sprite_meta.sheet
+    assert sprite_ref.sprite_id == sprite_meta.sprite_id
+    assert sprite_ref.href == sprite_meta.href
+
+    assert %InlineRef{} = inline_ref = SvgSpriteEx.to_ref(inline_svg_meta)
+    assert inline_ref.name == inline_svg_meta.name
+    assert inline_ref.registry == SvgSpriteEx.Generated.InlineIcons
+  end
+
   defp compile_runtime_metadata!(manifest_path, source_dir, compile_path, sprite_build_path) do
     unload_generated_modules()
     Code.prepend_path(compile_path)
@@ -93,11 +120,11 @@ defmodule SvgSpriteEx.MetadataTest do
   end
 
   defp unload_generated_modules do
-        for module <- [
-              SvgSpriteEx.Generated.InlineIcons,
-              SvgSpriteEx.Generated.InlineSvgs,
-              SvgSpriteEx.Generated.SpriteSheets
-            ] do
+    for module <- [
+          SvgSpriteEx.Generated.InlineIcons,
+          SvgSpriteEx.Generated.InlineSvgs,
+          SvgSpriteEx.Generated.SpriteSheets
+        ] do
       :code.delete(module)
       :code.purge(module)
     end
