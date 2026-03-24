@@ -1,0 +1,356 @@
+defmodule SpriteEx.Ref do
+  @moduledoc """
+  Compile-time SVG ref helpers.
+
+  Import this module to register SVG sources at compile time with `sprite_ref/1`,
+  `sprite_ref/2`, and `inline_ref/1`.
+
+  The helper functions here also expose the derived sheet paths and normalized
+  sheet names used by the compile pipeline.
+  """
+
+  alias SpriteEx.Source
+  alias SpriteEx.SpriteRef
+
+  @inline_registry_module SpriteEx.Generated.InlineIcons
+
+  defmacro __using__(_opts) do
+    quote do
+      import unquote(__MODULE__), only: [inline_ref: 1, sprite_ref: 1, sprite_ref: 2]
+
+      Module.register_attribute(__MODULE__, :__sprite_refs__, accumulate: true)
+      Module.register_attribute(__MODULE__, :__inline_refs__, accumulate: true)
+
+      @sprite_ex_source_root SpriteEx.Config.source_root!()
+      @sprite_ex_default_sheet SpriteEx.Config.default_sheet!()
+      @sprite_ex_public_path SpriteEx.Config.public_path!()
+      @before_compile unquote(__MODULE__)
+    end
+  end
+
+  @doc """
+  Builds a sprite reference using the default sheet.
+
+  This macro accepts a compile-time literal icon path such as `"regular/xmark"`
+  and returns a `%SpriteEx.SpriteRef{}` that points at the configured default
+  sprite sheet.
+  """
+  defmacro sprite_ref(name), do: build_sprite_ref_ast(name, [], __CALLER__)
+
+  @doc """
+  Builds a sprite reference with explicit options.
+
+  Supported options:
+
+  - `:sheet` - the target sheet name, as a string or atom
+
+  This macro accepts a compile-time literal icon path such as `"regular/xmark"`
+  and returns a `%SpriteEx.SpriteRef{}` that points at the specified sprite
+  sheet.
+  """
+  defmacro sprite_ref(name, opts) do
+    build_sprite_ref_ast(name, opts, __CALLER__)
+  end
+
+  @doc """
+  Builds an inline SVG reference.
+
+  This macro accepts a compile-time literal icon path such as `"regular/xmark"`
+  and returns a `%SpriteEx.InlineRef{}` for use with `<.svg ref={...} />`.
+  """
+  defmacro inline_ref(name) do
+    build_inline_ref_ast(name, __CALLER__)
+  end
+
+  @doc """
+  Builds the public sprite href from explicit source, sheet, and path values.
+
+  This convenience wrapper expects an explicit binary sheet name, normalizes
+  it, and then builds the final href.
+  """
+  def sprite_href(name, source_root, sheet, public_path) do
+    "#{sheet_public_path(sheet, public_path)}##{Source.sprite_id(name, source_root)}"
+  end
+
+  @doc """
+  Builds the filesystem path for a generated sprite sheet.
+
+  This convenience wrapper expects an explicit binary sheet name, normalizes
+  it, and then joins the build path.
+  """
+  def sheet_build_path(sheet, build_path) do
+    normalized_sheet = normalize_explicit_sheet!(sheet)
+    sheet_build_path_from_normalized(normalized_sheet, build_path)
+  end
+
+  @doc """
+  Builds the public path for a sprite sheet file.
+
+  This convenience wrapper expects an explicit binary sheet name, normalizes
+  it, and then joins the public path.
+  """
+  def sheet_public_path(sheet, public_path) do
+    normalized_sheet = normalize_explicit_sheet!(sheet)
+    sheet_public_path_from_normalized(normalized_sheet, public_path)
+  end
+
+  @doc "Normalizes a sprite sheet name using a caller-provided default."
+  def normalize_sheet!(sheet, default_sheet)
+
+  def normalize_sheet!(nil, default_sheet), do: normalize_sheet!(default_sheet, default_sheet)
+
+  def normalize_sheet!(sheet, default_sheet) do
+    sheet = coerce_sheet_name!(sheet, :sheet)
+    default_sheet = coerce_sheet_name!(default_sheet, :default_sheet)
+
+    sheet
+    |> String.trim()
+    |> case do
+      "" -> default_sheet
+      value -> value
+    end
+    |> sanitize_sheet!()
+  end
+
+  defp normalize_explicit_sheet!(sheet), do: normalize_sheet!(sheet, sheet)
+
+  defmacro __before_compile__(env) do
+    sprite_refs =
+      env.module
+      |> Module.get_attribute(:__sprite_refs__)
+      |> List.wrap()
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    inline_refs =
+      env.module
+      |> Module.get_attribute(:__inline_refs__)
+      |> List.wrap()
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    quote do
+      @doc false
+      def __sprite_refs__, do: unquote(sprite_refs)
+
+      @doc false
+      def __inline_refs__, do: unquote(inline_refs)
+    end
+  end
+
+  defp build_sprite_ref_ast(name, opts, caller) do
+    source_root = module_attribute!(caller, :sprite_ex_source_root)
+    default_sheet = module_attribute!(caller, :sprite_ex_default_sheet)
+    public_path = module_attribute!(caller, :sprite_ex_public_path)
+
+    literal_name =
+      expand_literal_string!(
+        name,
+        caller,
+        "sprite_ref expects compile-time literal string asset names"
+      )
+
+    literal_opts = expand_literal_opts!(opts, caller)
+    normalized_name = expand_literal_name!(literal_name, caller, source_root)
+
+    normalized_sheet =
+      expand_literal_sheet!(Keyword.get(literal_opts, :sheet), caller, default_sheet)
+
+    ref =
+      %SpriteRef{
+        name: normalized_name,
+        sheet: normalized_sheet,
+        sprite_id: Source.sprite_id_from_normalized(normalized_name),
+        href: sprite_href_from_normalized(normalized_name, normalized_sheet, public_path)
+      }
+
+    register_sprite_ref!(caller.module, normalized_name, normalized_sheet, source_root)
+
+    quote do
+      %SpriteEx.SpriteRef{
+        name: unquote(ref.name),
+        sheet: unquote(ref.sheet),
+        sprite_id: unquote(ref.sprite_id),
+        href: unquote(ref.href)
+      }
+    end
+  end
+
+  defp build_inline_ref_ast(name, caller) do
+    source_root = module_attribute!(caller, :sprite_ex_source_root)
+
+    literal_name =
+      expand_literal_string!(
+        name,
+        caller,
+        "inline_ref/1 only accepts compile-time literal string asset names"
+      )
+
+    normalized_name = expand_literal_name!(literal_name, caller, source_root)
+    register_inline_ref!(caller.module, normalized_name, source_root)
+
+    quote do
+      %SpriteEx.InlineRef{
+        name: unquote(normalized_name),
+        registry: unquote(@inline_registry_module)
+      }
+    end
+  end
+
+  defp expand_literal_name!(name, caller, source_root) when is_binary(name) do
+    normalized_name = Source.normalize_name!(name, source_root)
+    _source = Source.read!(normalized_name, source_root)
+    normalized_name
+  rescue
+    error ->
+      reraise CompileError,
+              [file: caller.file, line: caller.line, description: Exception.message(error)],
+              __STACKTRACE__
+  end
+
+  defp expand_literal_string!(value, caller, message) do
+    case expand_literal!(value, caller) do
+      literal when is_binary(literal) ->
+        literal
+
+      _other ->
+        raise CompileError, file: caller.file, line: caller.line, description: message
+    end
+  end
+
+  defp expand_literal_sheet!(sheet, caller, default_sheet) do
+    normalize_sheet!(sheet, default_sheet)
+  rescue
+    error in ArgumentError ->
+      reraise CompileError,
+              [file: caller.file, line: caller.line, description: error.message],
+              __STACKTRACE__
+  end
+
+  defp expand_literal_opts!(opts, caller) do
+    literal_opts = expand_literal!(opts, caller)
+
+    cond do
+      literal_opts == [] ->
+        []
+
+      Keyword.keyword?(literal_opts) ->
+        validate_opts!(literal_opts, caller)
+
+      true ->
+        raise CompileError,
+          file: caller.file,
+          line: caller.line,
+          description: "sprite_ref/2 only accepts compile-time literal keyword options"
+    end
+  end
+
+  defp expand_literal!(value, caller) do
+    expanded = Macro.expand(value, caller)
+
+    if Macro.quoted_literal?(expanded) do
+      {literal, _binding} = Code.eval_quoted(expanded, [], caller)
+      literal
+    else
+      expanded
+    end
+  end
+
+  defp validate_opts!(opts, caller) do
+    case Keyword.keys(opts) -- [:sheet] do
+      [] ->
+        opts
+
+      invalid_keys ->
+        raise CompileError,
+          file: caller.file,
+          line: caller.line,
+          description:
+            "sprite_ref/2 only supports the :sheet option, got: #{inspect(invalid_keys)}"
+    end
+  end
+
+  defp register_sprite_ref!(module, normalized_name, normalized_sheet, source_root) do
+    Module.put_attribute(module, :__sprite_refs__, {normalized_sheet, normalized_name})
+    register_external_resource!(module, normalized_name, source_root)
+  end
+
+  defp register_inline_ref!(module, normalized_name, source_root) do
+    Module.put_attribute(module, :__inline_refs__, normalized_name)
+    register_external_resource!(module, normalized_name, source_root)
+  end
+
+  defp register_external_resource!(module, normalized_name, source_root) do
+    Module.put_attribute(
+      module,
+      :external_resource,
+      Source.source_file_path!(normalized_name, source_root)
+    )
+  end
+
+  defp sprite_href_from_normalized(name, normalized_sheet, public_path) do
+    "#{sheet_public_path_from_normalized(normalized_sheet, public_path)}##{Source.sprite_id_from_normalized(name)}"
+  end
+
+  defp sheet_build_path_from_normalized(normalized_sheet, build_path) do
+    Path.join(build_path, sheet_filename_from_normalized(normalized_sheet))
+  end
+
+  defp sheet_public_path_from_normalized(normalized_sheet, public_path) do
+    Path.join(public_path, sheet_filename_from_normalized(normalized_sheet))
+  end
+
+  defp sheet_filename_from_normalized(normalized_sheet) do
+    normalized_sheet <> ".svg"
+  end
+
+  defp sanitize_sheet!(sheet) do
+    sanitized_sheet =
+      sheet
+      |> String.downcase()
+      |> String.replace(~r/[^a-z0-9_-]+/u, "_")
+      |> String.replace(~r/_+/, "_")
+      |> String.trim("_")
+
+    if sanitized_sheet == "" do
+      raise ArgumentError, "sprite sheet names must contain at least one alphanumeric character"
+    end
+
+    sanitized_sheet
+  end
+
+  defp coerce_sheet_name!(value, argument_name) do
+    cond do
+      is_binary(value) ->
+        value
+
+      is_atom(value) and not is_nil(value) ->
+        Atom.to_string(value)
+
+      true ->
+        raise ArgumentError,
+              "sprite sheet #{argument_name} must be strings or non-nil atoms, got: #{inspect(value)}"
+    end
+  end
+
+  defp module_attribute!(%{module: module} = caller, attribute)
+       when is_atom(module) and module != nil do
+    case Module.get_attribute(module, attribute) do
+      nil ->
+        raise CompileError,
+          file: caller.file,
+          line: caller.line,
+          description: "missing required module attribute @#{attribute}"
+
+      value ->
+        value
+    end
+  end
+
+  defp module_attribute!(caller, _attribute) do
+    raise CompileError,
+      file: caller.file,
+      line: caller.line,
+      description: "SpriteEx.Ref macros must be used inside a module that uses SpriteEx"
+  end
+end
