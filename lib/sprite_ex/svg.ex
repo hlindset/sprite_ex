@@ -34,6 +34,8 @@ defmodule SpriteEx.Svg do
 
       <.svg ref={sprite_ref("regular/xmark", sheet: "dashboard")} class="size-4" />
 
+      <.svg ref={sprite_ref("regular/xmark", sheet: :dashboard)} class="size-6" />
+
       <.svg ref={inline_ref("regular/xmark")} class="size-4" />
   """
   def svg(%{ref: %SpriteRef{}} = assigns) do

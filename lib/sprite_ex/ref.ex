@@ -14,11 +14,7 @@ defmodule SpriteEx.Ref do
 
   @inline_registry_module SpriteEx.Generated.InlineIcons
 
-  @doc """
-  Imports the compile-time ref macros and registers the caller for SpriteEx.
-
-  This is usually brought in indirectly via `use SpriteEx`.
-  """
+  @doc false
   defmacro __using__(_opts) do
     quote do
       import unquote(__MODULE__), only: [inline_ref: 1, sprite_ref: 1, sprite_ref: 2]
@@ -42,13 +38,7 @@ defmodule SpriteEx.Ref do
 
   ## Examples
 
-      iex> {:module, SpriteExDocTestSpriteRefDefaultExample, _, _} =
-      ...>   defmodule Elixir.SpriteExDocTestSpriteRefDefaultExample do
-      ...>   use SpriteEx
-      ...>
-      ...>   def icon_ref, do: sprite_ref("regular/xmark")
-      ...> end
-      iex> ref = SpriteExDocTestSpriteRefDefaultExample.icon_ref()
+      iex> ref = SpriteEx.DocTestSupport.default_sprite_ref()
       iex> {ref.name, ref.sheet, String.ends_with?(ref.href, "#" <> ref.sprite_id)}
       {"regular/xmark", "sprites", true}
   """
@@ -67,13 +57,7 @@ defmodule SpriteEx.Ref do
 
   ## Examples
 
-      iex> {:module, SpriteExDocTestSpriteRefSheetExample, _, _} =
-      ...>   defmodule Elixir.SpriteExDocTestSpriteRefSheetExample do
-      ...>   use SpriteEx
-      ...>
-      ...>   def icon_ref, do: sprite_ref("regular/xmark", sheet: "Dashboard")
-      ...> end
-      iex> ref = SpriteExDocTestSpriteRefSheetExample.icon_ref()
+      iex> ref = SpriteEx.DocTestSupport.sheeted_sprite_ref()
       iex> {ref.name, ref.sheet, String.starts_with?(ref.href, "/assets/sprites/dashboard.svg#")}
       {"regular/xmark", "dashboard", true}
   """
@@ -89,13 +73,7 @@ defmodule SpriteEx.Ref do
 
   ## Examples
 
-      iex> {:module, SpriteExDocTestInlineRefExample, _, _} =
-      ...>   defmodule Elixir.SpriteExDocTestInlineRefExample do
-      ...>   use SpriteEx
-      ...>
-      ...>   def icon_ref, do: inline_ref("regular/xmark")
-      ...> end
-      iex> ref = SpriteExDocTestInlineRefExample.icon_ref()
+      iex> ref = SpriteEx.DocTestSupport.inline_ref()
       iex> {ref.name, ref.registry}
       {"regular/xmark", SpriteEx.Generated.InlineIcons}
   """

@@ -14,16 +14,14 @@ defmodule SpriteEx do
 
   ## Examples
 
-      iex> {:module, SpriteExDocTestUsingExample, _, _} =
-      ...>   defmodule Elixir.SpriteExDocTestUsingExample do
-      ...>   use Phoenix.Component
-      ...>   use SpriteEx
-      ...>
-      ...>   def icon_ref, do: sprite_ref("regular/xmark")
-      ...> end
-      iex> ref = SpriteExDocTestUsingExample.icon_ref()
-      iex> {ref.name, ref.sheet, String.starts_with?(ref.href, "/assets/sprites/sprites.svg#")}
-      {"regular/xmark", "sprites", true}
+      defmodule MyAppWeb.IconComponents do
+        use Phoenix.Component
+        use SpriteEx
+
+        def close_icon(assigns) do
+          ~H"<.svg ref={sprite_ref(\"regular/xmark\")} class=\"size-4\" />"
+        end
+      end
   """
   defmacro __using__(_opts) do
     quote do
