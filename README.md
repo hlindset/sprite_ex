@@ -74,10 +74,7 @@ When you run `mix compile`, the compiler:
 - compiles a `SpriteEx.Generated.InlineIcons` module for inline SVG lookup
 
 `sprite_ref` returns a `%SpriteEx.SpriteRef{}` whose `href` points at
-`#{public_path}/#{sheet}.svg##{sprite_id}`.
-
-The `sheet` option accepts either a string or an atom and is normalized to a
-lowercased sheet name.
+`#{public_path}/#{sheet}.svg#{sprite_id}`.
 
 Your application must serve the generated files from the same public path you
 configured. For example: Write sprite sheets into `priv/static/sprites`, and
