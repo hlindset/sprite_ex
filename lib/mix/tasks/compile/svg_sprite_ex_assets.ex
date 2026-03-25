@@ -5,7 +5,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
   @recursive true
   @shortdoc "Builds application SVG sprite sheets"
-  @manifest_vsn 1
+  @manifest_vsn 2
 
   alias SvgSpriteEx.Config
   alias SvgSpriteEx.InlineSvgMeta
@@ -21,20 +21,25 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
   @impl Mix.Task.Compiler
   def run(_args) do
-    compile_sprite_artifacts!(
-      compile_path: Mix.Project.compile_path(),
-      compiler_manifest_path: compiler_manifest_path(),
-      elixir_manifest_path: elixir_manifest_path(),
-      generated_source_path: generated_source_path(),
-      inline_metadata_source_path: inline_metadata_source_path(),
-      sprite_metadata_source_path: sprite_metadata_source_path(),
-      inline_registry_module: @inline_registry_module,
-      inline_metadata_module: @inline_metadata_module,
-      sprite_metadata_module: @sprite_metadata_module,
-      build_path: Config.build_path!(),
-      public_path: Config.public_path!(),
-      source_root: Config.source_root!()
-    )
+    register_after_elixir_hook(default_compile_opts())
+    :noop
+  end
+
+  @doc false
+  def register_after_elixir_hook(opts) do
+    Mix.Task.Compiler.after_compiler(:elixir, after_elixir_callback(opts))
+  end
+
+  @doc false
+  def after_elixir_callback(opts) do
+    fn
+      {:error, diagnostics} ->
+        {:error, diagnostics}
+
+      {status, diagnostics} ->
+        compile_sprite_artifacts!(opts)
+        {status, diagnostics}
+    end
   end
 
   @impl Mix.Task.Compiler
@@ -53,6 +58,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
     compiler_manifest_path
     |> read_compiler_manifest()
+    |> Map.fetch!(:artifact_paths)
     |> cleanup_artifact_paths()
 
     File.rm(compiler_manifest_path)
@@ -94,75 +100,114 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
     sprite_refs = collect_project_refs(modules, &sprite_refs/1)
     inline_refs = collect_project_refs(modules, &inline_refs/1)
-    inline_sources = load_inline_sources(inline_refs, source_root)
-    sprite_metadata = build_sprite_metadata(sprite_refs, build_path, public_path, source_root)
-    inline_svg_infos = build_inline_svg_infos(inline_sources)
-    sprite_builds = build_sprite_outputs(sprite_metadata, source_root)
+    compiler_manifest = read_compiler_manifest(compiler_manifest_path)
 
-    File.mkdir_p!(build_path)
-
-    sprite_result = write_sprite_sheets(sprite_builds)
-
-    inline_result =
-      write_inline_registry(
-        compile_path,
+    input_digest =
+      input_digest(
+        sprite_refs,
+        inline_refs,
+        source_root,
+        build_path,
+        public_path,
         generated_source_path,
-        inline_registry_module,
-        inline_sources
-      )
-
-    sprite_metadata_result =
-      write_sprite_metadata_registry(
-        compile_path,
-        sprite_metadata_source_path,
-        sprite_metadata_module,
-        sprite_metadata
-      )
-
-    inline_metadata_result =
-      write_inline_metadata_registry(
-        compile_path,
         inline_metadata_source_path,
+        sprite_metadata_source_path,
+        inline_registry_module,
         inline_metadata_module,
-        inline_svg_infos
+        sprite_metadata_module
       )
 
-    active_artifact_paths =
-      active_artifact_paths(
-        sprite_builds,
-        compile_path,
-        generated_source_path,
-        inline_sources,
-        inline_registry_module,
-        sprite_metadata_source_path,
-        sprite_metadata,
-        sprite_metadata_module,
-        inline_metadata_source_path,
-        inline_svg_infos,
-        inline_metadata_module
-      )
+    if manifest_current?(compiler_manifest, input_digest) do
+      :noop
+    else
+      inline_sources = load_inline_sources(inline_refs, source_root)
+      sprite_metadata = build_sprite_metadata(sprite_refs, build_path, public_path, source_root)
+      inline_svg_infos = build_inline_svg_infos(inline_sources)
+      sprite_builds = build_sprite_outputs(sprite_metadata, source_root)
 
-    manifest_cleanup_result =
-      compiler_manifest_path
-      |> read_compiler_manifest()
-      |> Enum.reject(&(&1 in active_artifact_paths))
-      |> cleanup_artifact_paths()
+      File.mkdir_p!(build_path)
 
-    manifest_write_result = write_compiler_manifest(compiler_manifest_path, active_artifact_paths)
+      sprite_result = write_sprite_sheets(sprite_builds)
 
-    if Enum.all?(
-         [
-           sprite_result,
-           inline_result,
-           sprite_metadata_result,
-           inline_metadata_result,
-           manifest_cleanup_result,
-           manifest_write_result
-         ],
-         &(&1 == :noop)
-       ),
-       do: :noop,
-       else: :ok
+      inline_result =
+        write_inline_registry(
+          compile_path,
+          generated_source_path,
+          inline_registry_module,
+          inline_sources
+        )
+
+      sprite_metadata_result =
+        write_sprite_metadata_registry(
+          compile_path,
+          sprite_metadata_source_path,
+          sprite_metadata_module,
+          sprite_metadata
+        )
+
+      inline_metadata_result =
+        write_inline_metadata_registry(
+          compile_path,
+          inline_metadata_source_path,
+          inline_metadata_module,
+          inline_svg_infos
+        )
+
+      active_artifact_paths =
+        active_artifact_paths(
+          sprite_builds,
+          compile_path,
+          generated_source_path,
+          inline_sources,
+          inline_registry_module,
+          sprite_metadata_source_path,
+          sprite_metadata,
+          sprite_metadata_module,
+          inline_metadata_source_path,
+          inline_svg_infos,
+          inline_metadata_module
+        )
+
+      manifest_cleanup_result =
+        compiler_manifest
+        |> Map.fetch!(:artifact_paths)
+        |> Enum.reject(&(&1 in active_artifact_paths))
+        |> cleanup_artifact_paths()
+
+      manifest_write_result =
+        write_compiler_manifest(compiler_manifest_path, active_artifact_paths, input_digest)
+
+      if Enum.all?(
+           [
+             sprite_result,
+             inline_result,
+             sprite_metadata_result,
+             inline_metadata_result,
+             manifest_cleanup_result,
+             manifest_write_result
+           ],
+           &(&1 == :noop)
+         ),
+         do: :noop,
+         else: :ok
+    end
+  end
+
+  defp default_compile_opts do
+    [
+      compile_path: Mix.Project.compile_path(),
+      compiler_manifest_path: compiler_manifest_path(),
+      elixir_manifest_path: elixir_manifest_path(),
+      generated_source_path: generated_source_path(),
+      inline_metadata_source_path: inline_metadata_source_path(),
+      sprite_metadata_source_path: sprite_metadata_source_path(),
+      inline_registry_module: @inline_registry_module,
+      inline_metadata_module: @inline_metadata_module,
+      sprite_metadata_module: @sprite_metadata_module,
+      build_path: Config.build_path!(),
+      public_path: Config.public_path!(),
+      source_root: Config.source_root!()
+    ]
   end
 
   defp project_modules(compile_path, elixir_manifest_path) do
@@ -232,6 +277,65 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
         source_path: file_path
       }
     end)
+  end
+
+  defp input_digest(
+         sprite_refs,
+         inline_refs,
+         source_root,
+         build_path,
+         public_path,
+         generated_source_path,
+         inline_metadata_source_path,
+         sprite_metadata_source_path,
+         inline_registry_module,
+         inline_metadata_module,
+         sprite_metadata_module
+       ) do
+    digest_input = %{
+      sprite_refs: sprite_refs,
+      inline_refs: inline_refs,
+      asset_digests: asset_digests(sprite_refs, inline_refs, source_root),
+      source_root: Path.expand(source_root),
+      build_path: Path.expand(build_path),
+      public_path: public_path,
+      generated_source_path: generated_source_path,
+      inline_metadata_source_path: inline_metadata_source_path,
+      sprite_metadata_source_path: sprite_metadata_source_path,
+      inline_registry_module: inline_registry_module,
+      inline_metadata_module: inline_metadata_module,
+      sprite_metadata_module: sprite_metadata_module
+    }
+
+    term_digest(digest_input)
+  end
+
+  defp asset_digests(sprite_refs, inline_refs, source_root) do
+    sprite_refs
+    |> Enum.map(fn {_sheet, name} -> name end)
+    |> Kernel.++(inline_refs)
+    |> Enum.uniq()
+    |> Enum.sort()
+    |> Enum.map(fn name ->
+      file_path = Source.source_file_path!(name, source_root)
+      {name, file_path, file_digest(file_path)}
+    end)
+  end
+
+  defp file_digest(path) do
+    path
+    |> File.read!()
+    |> binary_digest()
+  end
+
+  defp binary_digest(binary) when is_binary(binary) do
+    :crypto.hash(:sha256, binary)
+  end
+
+  defp term_digest(term) do
+    term
+    |> :erlang.term_to_binary()
+    |> then(&:crypto.hash(:sha256, &1))
   end
 
   defp active_artifact_paths(
@@ -435,21 +539,34 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
     else
       unload_generated_module(generated_module)
 
-      case Kernel.ParallelCompiler.compile_to_path([generated_source_path], compile_path,
-             return_diagnostics: true
-           ) do
-        {:ok, _modules, _warnings} ->
-          unload_generated_module(generated_module)
-          :ok
+      with_generated_module_conflicts_ignored(fn ->
+        case Kernel.ParallelCompiler.compile_to_path([generated_source_path], compile_path,
+               return_diagnostics: true
+             ) do
+          {:ok, _modules, _warnings} ->
+            unload_generated_module(generated_module)
+            :ok
 
-        {:error, errors, warnings} ->
-          diagnostics =
-            Enum.map(List.wrap(errors), &diagnostic_message/1) ++ warning_messages(warnings)
+          {:error, errors, warnings} ->
+            diagnostics =
+              Enum.map(List.wrap(errors), &diagnostic_message/1) ++ warning_messages(warnings)
 
-          raise Mix.Error,
-            message:
-              "failed to compile generated #{description}:\n#{Enum.join(diagnostics, "\n")}"
-      end
+            raise Mix.Error,
+              message:
+                "failed to compile generated #{description}:\n#{Enum.join(diagnostics, "\n")}"
+        end
+      end)
+    end
+  end
+
+  defp with_generated_module_conflicts_ignored(fun) when is_function(fun, 0) do
+    previous_value = Code.compiler_options()[:ignore_module_conflict]
+
+    try do
+      Code.put_compiler_option(:ignore_module_conflict, true)
+      fun.()
+    after
+      Code.put_compiler_option(:ignore_module_conflict, previous_value)
     end
   end
 
@@ -666,6 +783,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   defp unload_generated_module(generated_module) do
     :code.purge(generated_module)
     :code.delete(generated_module)
+    :code.purge(generated_module)
     :ok
   end
 
@@ -687,25 +805,41 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
     case File.read(path) do
       {:ok, binary} ->
         case :erlang.binary_to_term(binary, [:safe]) do
-          %{vsn: @manifest_vsn, artifact_paths: artifact_paths} when is_list(artifact_paths) ->
-            artifact_paths
+          %{vsn: @manifest_vsn, artifact_paths: artifact_paths, input_digest: input_digest}
+          when is_list(artifact_paths) and is_binary(input_digest) ->
+            %{artifact_paths: artifact_paths, input_digest: input_digest}
+
+          %{artifact_paths: artifact_paths} when is_list(artifact_paths) ->
+            %{artifact_paths: artifact_paths, input_digest: nil}
 
           _other ->
-            []
+            empty_manifest()
         end
 
       {:error, :enoent} ->
-        []
+        empty_manifest()
     end
   end
 
-  defp write_compiler_manifest(path, artifact_paths) do
+  defp write_compiler_manifest(path, artifact_paths, input_digest) do
     manifest =
-      %{vsn: @manifest_vsn, artifact_paths: artifact_paths}
+      %{vsn: @manifest_vsn, artifact_paths: artifact_paths, input_digest: input_digest}
       |> :erlang.term_to_binary()
 
     write_if_changed(path, manifest)
   end
+
+  defp manifest_current?(
+         %{artifact_paths: artifact_paths, input_digest: input_digest},
+         input_digest
+       )
+       when is_binary(input_digest) do
+    Enum.all?(artifact_paths, &File.exists?/1)
+  end
+
+  defp manifest_current?(_manifest, _input_digest), do: false
+
+  defp empty_manifest, do: %{artifact_paths: [], input_digest: nil}
 
   defp cleanup_artifact_paths([]), do: :noop
 

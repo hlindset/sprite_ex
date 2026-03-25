@@ -1,13 +1,13 @@
 # SvgSpriteEx
 
-`SvgSpriteEx` lets you turn SVG files into compile-time icon refs for Phoenix
+`SvgSpriteEx` lets you turn svg files into compile-time svg refs for Phoenix
 components and LiveView.
 
-You can render icons in two ways:
+You can render svgs in two ways:
 
 - `ref={sprite_ref("...")}` renders a `<svg><use ... /></svg>` wrapper backed
   by a generated sprite sheet
-- `ref={inline_ref("...")}` renders the full SVG inline in the document
+- `ref={inline_ref("...")}` renders the full svg inline in the document
 
 ## Installation
 
@@ -21,8 +21,9 @@ def deps do
 end
 ```
 
-Then register the sprite compiler after the default Mix compilers so it can
-discover `sprite_ref/1`, `sprite_ref/2`, and `inline_ref/1` usages.
+Then register the sprite compiler ahead of the default Mix compilers so it can
+install its Elixir compile callback and discover `sprite_ref/1`, `sprite_ref/2`,
+and `inline_ref/1` usages.
 
 ```elixir
 def project do
@@ -30,11 +31,25 @@ def project do
     app: :my_app,
     version: "0.1.0",
     elixir: "~> 1.19",
-    compilers: Mix.compilers() ++ [:svg_sprite_ex_assets],
+    compilers: [:svg_sprite_ex_assets] ++ Mix.compilers(),
     deps: deps()
   ]
 end
 ```
+
+Note that `:svg_sprite_ex_assets` **must** appear before the `:elixir` compiler.
+
+When using Phoenix code reloading in development, add `:svg_sprite_ex_assets`
+to `reloadable_compilers`. Phoenix only reruns the compilers listed there
+during request-time reloads, so omitting it can still reload the page before
+the generated sprite sheet or inline registry has been rebuilt.
+
+```elixir
+config :my_app, MyAppWeb.Endpoint,
+  reloadable_compilers: [:svg_sprite_ex_assets, :elixir, :app]
+```
+
+Adjust the list to match the compilers used in your project.
 
 ## Configuration
 
@@ -44,12 +59,13 @@ import Config
 config :svg_sprite_ex,
   source_root: Path.expand("../priv/icons", __DIR__),
   build_path: Path.expand("../priv/static/svgs", __DIR__),
-  public_path: "/svgs"
+  public_path: "/svgs",
+  default_sheet: "sprites"
 ```
 
 ### Required configuration
 
-- `source_root` - absolute path to the directory that contains source SVG files.
+- `source_root` - absolute path to the directory that contains source svg files.
 - `build_path` - absolute path where the compiler generates sprite sheets.
 - `public_path` - public URL prefix for `sprite_ref/1` hrefs.
 
@@ -58,11 +74,11 @@ config :svg_sprite_ex,
 - `default_sheet` - default sprite sheet name when no `sheet` option is
   given. Defaults to `sprites`.
 
-Given the config above, if your icon file lives at
-`priv/icons/regular/xmark.svg`, the logical icon name is `regular/xmark`.
+Given the config above, if your svg file lives at
+`priv/icons/regular/xmark.svg`, the logical svg name is `regular/xmark`.
 
 Note that `sprite_ref` and `inline_ref` only accept compile-time literal
-values. This is how the compiler discovers which icons need to be included in
+values. This is how the compiler discovers which svgs need to be included in
 the generated outputs.
 
 ## How it works
@@ -70,12 +86,9 @@ the generated outputs.
 When you run `mix compile`, the compiler:
 
 - scans compiled modules for `sprite_ref` and `inline_ref` calls
-- writes one SVG sprite sheet per sheet name into `build_path`
-- compiles generated modules for inline SVG lookup and runtime metadata lookup
-
-With the config above, `sprite_ref("regular/xmark")` returns a
-`%SvgSpriteEx.SpriteRef{}` whose `href` looks like
-`/svgs/sprites.svg#icon-812c65654d41`.
+- hashes the referenced svg files and compiler inputs to detect asset changes
+- writes one svg sprite sheet per sheet name into `build_path`
+- compiles generated modules for inline svg lookup and runtime metadata lookup
 
 Your application must serve the generated files from the same public path you
 configured. For example: Write sprite sheets into `priv/static/svgs`, and
@@ -83,7 +96,7 @@ serve them from `/svgs`.
 
 ## Phoenix usage
 
-Use `SvgSpriteEx` in any component, LiveView, or HTML module that renders icons:
+Use `SvgSpriteEx` in any component, LiveView, or HTML module that renders svgs:
 
 ```elixir
 defmodule MyAppWeb.MyComponents do
@@ -112,22 +125,22 @@ defmodule MyAppWeb.MyComponents do
 end
 ```
 
-By default the SVGs are placed in a sprite sheet called `sprites.svg`, but you
-can also compile icons to other named sheets:
+By default the svgs are placed in a sprite sheet called `sprites.svg`, but you
+can also compile svgs to other named sheets:
 
 ```elixir
 <.svg ref={sprite_ref("regular/xmark", sheet: "dashboard")} class="size-4" />
 ```
 
-### Render inline SVGs
+### Render inline svgs
 
-Inline mode skips the sprite sheet and renders the SVG inline in the document.
+Inline mode skips the sprite sheet and renders the svg inline in the document.
 
 ```elixir
 <.svg ref={inline_ref("regular/xmark")} class="size-4" />
 ```
 
-This lets you serve the raw SVG markup in the page instead of a `<use>`
+This lets you serve the raw svg markup in the page instead of a `<use>`
 reference, without doing runtime file reads.
 
 ## Runtime metadata
