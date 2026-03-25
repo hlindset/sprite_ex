@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 - 2026-03-25
+
+- Added a runtime metadata API for compiled sprite sheets, sprites, and inline
+  SVGs through `SvgSpriteEx`.
+- Reworked compiler change tracking so SVG asset updates are detected and
+  rebuilt correctly in the after-Elixir compiler pipeline.
+
 ## 0.1.0 - 2026-03-24
 
 - Initial public release of SvgSpriteEx.

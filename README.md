@@ -16,7 +16,7 @@ Add `svg_sprite_ex` to your dependencies:
 ```elixir
 def deps do
   [
-    {:svg_sprite_ex, "~> 0.1.0"}
+    {:svg_sprite_ex, "~> 0.2.0"}
   ]
 end
 ```
@@ -29,7 +29,7 @@ and `inline_ref/1` usages.
 def project do
   [
     app: :my_app,
-    version: "0.1.0",
+    version: "0.2.0",
     elixir: "~> 1.19",
     compilers: [:svg_sprite_ex_assets] ++ Mix.compilers(),
     deps: deps()
