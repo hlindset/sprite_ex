@@ -1,6 +1,8 @@
 defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
   use ExUnit.Case
 
+  import Test.Support.CompileHelpers, only: [compile_fixture_modules!: 3, compiler_state_path: 1]
+
   alias Mix.Tasks.Compile.SvgSpriteExAssets
   alias SvgSpriteEx.Config
   alias SvgSpriteEx.Ref
@@ -355,6 +357,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
     compile_path = unique_tmp_dir!("compile-path")
     sprite_build_path = unique_tmp_dir!("sprite-build-path")
     manifest_path = elixir_manifest_path!(source_dir)
+    runtime_data_path = runtime_data_path(manifest_path)
     svg_source_root = Config.source_root!()
 
     module = unique_module(:deleted_fixture)
@@ -367,6 +370,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
                compile_path: compile_path,
                compiler_state_path: compiler_state_path(manifest_path),
                elixir_manifest_path: manifest_path,
+               runtime_data_path: runtime_data_path,
                build_path: sprite_build_path,
                source_root: svg_source_root
              )
@@ -391,6 +395,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
                compile_path: compile_path,
                compiler_state_path: compiler_state_path(manifest_path),
                elixir_manifest_path: manifest_path,
+               runtime_data_path: runtime_data_path,
                build_path: sprite_build_path,
                source_root: svg_source_root
              )
@@ -556,6 +561,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
     sprite_build_path = unique_tmp_dir!("sprite-build-path")
     manifest_path = elixir_manifest_path!(source_dir)
     compiler_manifest_path = compiler_manifest_path(manifest_path)
+    runtime_data_path = runtime_data_path(manifest_path)
     svg_source_root = Config.source_root!()
     foreign_svg_path = Path.join(sprite_build_path, "foreign.svg")
 
@@ -571,6 +577,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
                compiler_state_path: compiler_state_path(manifest_path),
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
+               runtime_data_path: runtime_data_path,
                build_path: sprite_build_path,
                source_root: svg_source_root
              )
@@ -584,6 +591,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
                compiler_state_path: compiler_state_path(manifest_path),
                compiler_manifest_path: compiler_manifest_path,
                elixir_manifest_path: manifest_path,
+               runtime_data_path: runtime_data_path,
                build_path: sprite_build_path,
                source_root: svg_source_root
              )
@@ -1011,39 +1019,6 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
              )
   end
 
-  defp compile_fixture_modules!(manifest_path, source_dir, compile_path) do
-    override = compiler_state_path(manifest_path)
-    previous_override = Application.get_env(:svg_sprite_ex, :compiler_state_path_override)
-    Application.put_env(:svg_sprite_ex, :compiler_state_path_override, override)
-
-    try do
-      case Mix.Compilers.Elixir.compile(
-             manifest_path,
-             [source_dir],
-             compile_path,
-             {:svg_sprite_ex_test, source_dir},
-             [],
-             [],
-             []
-           ) do
-        {:ok, _diagnostics} ->
-          :ok
-
-        {:noop, _diagnostics} ->
-          :ok
-
-        {:error, diagnostics} ->
-          flunk("fixture modules failed to compile: #{inspect(diagnostics)}")
-      end
-    after
-      if is_nil(previous_override) do
-        Application.delete_env(:svg_sprite_ex, :compiler_state_path_override)
-      else
-        Application.put_env(:svg_sprite_ex, :compiler_state_path_override, previous_override)
-      end
-    end
-  end
-
   defp manifest_modules(manifest_path) do
     manifest_path
     |> Mix.Compilers.Elixir.read_manifest()
@@ -1118,12 +1093,6 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
   defp runtime_data_path(manifest_path) do
     compiler_state_path(manifest_path)
     |> Path.join("runtime_data.etf")
-  end
-
-  defp compiler_state_path(manifest_path) do
-    manifest_path
-    |> Path.dirname()
-    |> Path.join("svg_sprite_ex")
   end
 
   defp ref_snapshot_path(manifest_path, module) do
