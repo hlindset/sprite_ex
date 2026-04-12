@@ -44,7 +44,7 @@ defmodule SvgSpriteEx.MixProject do
   defp deps do
     [
       {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_view, "~> 1.1.0"},
+      {:phoenix_live_view, ">= 1.0.0 and < 2.0.0"},
       {:ex_doc, "~> 0.40", only: :dev, runtime: false},
       {:floki, "~> 0.38", only: :test},
       {:excoveralls, "~> 0.18", only: :test},
