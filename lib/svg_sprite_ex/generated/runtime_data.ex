@@ -56,49 +56,71 @@ defmodule SvgSpriteEx.Generated.RuntimeData do
 
   defp load_runtime_data(paths) do
     paths
-    |> Enum.map(&read_runtime_data!/1)
-    |> Enum.reduce(empty_runtime_data(), &merge_runtime_data/2)
+    |> Enum.reduce(empty_runtime_data(), fn path, merged_data ->
+      path
+      |> read_runtime_data!()
+      |> merge_runtime_data(path, merged_data)
+    end)
     |> finalize_runtime_data()
   end
 
-  defp merge_runtime_data(file_data, merged_data) do
+  defp merge_runtime_data(file_data, path, merged_data) do
+    sheet_sources = register_sheet_sources!(merged_data.sheet_sources, file_data, path)
+
     %{
       merged_data
       | inline_assets: Map.merge(merged_data.inline_assets, file_data.inline_assets),
         inline_svg_map: Map.merge(merged_data.inline_svg_map, file_data.inline_svg_map),
         sprite_sheet_map: Map.merge(merged_data.sprite_sheet_map, file_data.sprite_sheet_map),
-        sprites_in_sheet:
-          Map.merge(
-            merged_data.sprites_in_sheet,
-            file_data.sprites_in_sheet,
-            fn _sheet, current_sprites, incoming_sprites ->
-              merge_sprites(current_sprites, incoming_sprites)
-            end
-          )
+        sprites_in_sheet: Map.merge(merged_data.sprites_in_sheet, file_data.sprites_in_sheet),
+        sheet_sources: sheet_sources
     }
   end
 
   defp finalize_runtime_data(merged_data) do
+    runtime_data = Map.drop(merged_data, [:sheet_sources])
+
     %{
-      merged_data
+      runtime_data
       | inline_svgs:
-          merged_data.inline_svg_map
+          runtime_data.inline_svg_map
           |> Map.values()
           |> Enum.sort_by(& &1.name),
         sprite_sheets:
-          merged_data.sprite_sheet_map
+          runtime_data.sprite_sheet_map
           |> Map.values()
           |> Enum.sort_by(& &1.name),
         sprites_in_sheet:
-          Map.new(merged_data.sprites_in_sheet, fn {sheet, sprites} ->
+          Map.new(runtime_data.sprites_in_sheet, fn {sheet, sprites} ->
             {sheet, Enum.sort_by(sprites, & &1.name)}
           end)
     }
   end
 
-  defp merge_sprites(current_sprites, incoming_sprites) do
-    (current_sprites ++ incoming_sprites)
-    |> Enum.uniq_by(&{&1.sheet, &1.name})
+  defp register_sheet_sources!(sheet_sources, file_data, path) do
+    file_data
+    |> sheet_names()
+    |> Enum.reduce(sheet_sources, fn sheet, acc ->
+      case acc do
+        %{^sheet => existing_path} ->
+          raise_duplicate_sheet_error!(sheet, existing_path, path)
+
+        %{} ->
+          Map.put(acc, sheet, path)
+      end
+    end)
+  end
+
+  defp sheet_names(file_data) do
+    (Map.keys(file_data.sprite_sheet_map) ++ Map.keys(file_data.sprites_in_sheet))
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
+
+  defp raise_duplicate_sheet_error!(sheet, existing_path, path) do
+    raise ArgumentError,
+          "duplicate svg_sprite_ex sheet #{inspect(sheet)} in runtime data files " <>
+            "#{inspect(existing_path)} and #{inspect(path)}; sheet names must be unique across apps on the code path"
   end
 
   defp read_runtime_data!(path) do
@@ -146,6 +168,7 @@ defmodule SvgSpriteEx.Generated.RuntimeData do
       inline_assets: %{},
       inline_svgs: [],
       inline_svg_map: %{},
+      sheet_sources: %{},
       sprite_sheets: [],
       sprite_sheet_map: %{},
       sprites_in_sheet: %{}
