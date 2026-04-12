@@ -76,7 +76,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
     compiler_manifest = read_compiler_manifest(compiler_manifest_path)
     modules = project_modules(elixir_manifest_path)
 
-    {sprite_refs, inline_refs, ref_snapshot_result} =
+    {sprite_refs, inline_refs, ref_snapshot_result, ref_snapshots_bootstrapped} =
       collect_project_refs(
         compile_path,
         compiler_state_path,
@@ -99,7 +99,15 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
       )
 
     if manifest_current?(compiler_manifest, input_digest) do
-      ref_snapshot_result
+      manifest_write_result =
+        maybe_write_compiler_manifest(
+          compiler_manifest,
+          compiler_manifest_path,
+          input_digest,
+          ref_snapshots_bootstrapped
+        )
+
+      changed([ref_snapshot_result, manifest_write_result])
     else
       inline_sources = load_inline_sources(inline_refs, source_root)
       sprite_metadata = build_sprite_metadata(sprite_refs, build_path, public_path, source_root)
@@ -126,7 +134,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
           compiler_manifest_path,
           active_artifact_paths,
           input_digest,
-          true
+          ref_snapshots_bootstrapped
         )
 
       if Enum.all?(
@@ -175,9 +183,9 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
       Code.prepend_path(compile_path)
     end
 
-    {snapshots, bootstrap_results} =
+    {snapshots, snapshot_results} =
       Enum.map_reduce(modules, [], fn module, results ->
-        {snapshot, result} =
+        {snapshot, result, loaded_from_snapshot?} =
           load_or_bootstrap_ref_snapshot(
             module,
             compile_path,
@@ -185,7 +193,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
             bootstrap_missing_snapshots?
           )
 
-        {snapshot, [result | results]}
+        {snapshot, [{result, loaded_from_snapshot?} | results]}
       end)
 
     active_snapshot_paths =
@@ -214,7 +222,11 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
       |> Enum.uniq()
       |> Enum.sort()
 
-    {sprite_refs, inline_refs, changed([stale_snapshot_result | bootstrap_results])}
+    ref_snapshot_results = Enum.map(snapshot_results, &elem(&1, 0))
+    ref_snapshots_bootstrapped = Enum.all?(snapshot_results, &elem(&1, 1))
+
+    {sprite_refs, inline_refs, changed([stale_snapshot_result | ref_snapshot_results]),
+     ref_snapshots_bootstrapped}
   end
 
   defp build_sprite_metadata(sprite_refs, build_path, public_path, source_root) do
@@ -472,6 +484,29 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
     write_if_changed(path, manifest)
   end
 
+  defp maybe_write_compiler_manifest(
+         %{ref_snapshots_bootstrapped: ref_snapshots_bootstrapped},
+         _compiler_manifest_path,
+         _input_digest,
+         ref_snapshots_bootstrapped
+       ) do
+    :noop
+  end
+
+  defp maybe_write_compiler_manifest(
+         %{artifact_paths: artifact_paths},
+         compiler_manifest_path,
+         input_digest,
+         ref_snapshots_bootstrapped
+       ) do
+    write_compiler_manifest(
+      compiler_manifest_path,
+      artifact_paths,
+      input_digest,
+      ref_snapshots_bootstrapped
+    )
+  end
+
   defp manifest_current?(
          %{artifact_paths: artifact_paths, input_digest: input_digest},
          input_digest
@@ -495,26 +530,25 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
   defp load_or_bootstrap_ref_snapshot(
          module,
-         _compile_path,
+         compile_path,
          compiler_state_path,
-         bootstrap_missing_snapshots?
+         _bootstrap_missing_snapshots?
        ) do
     snapshot_path = Ref.ref_snapshot_path(module, compiler_state_path)
 
     case read_ref_snapshot(snapshot_path) do
       {:ok, snapshot} ->
-        {snapshot, :noop}
+        {snapshot, :noop, true}
 
       :missing ->
-        if bootstrap_missing_snapshots? do
-          bootstrap_ref_snapshot(module, snapshot_path)
-        else
-          {nil, :noop}
-        end
+        {snapshot, result} = bootstrap_ref_snapshot(module, compile_path, snapshot_path)
+        {snapshot, result, false}
     end
   end
 
-  defp bootstrap_ref_snapshot(module, snapshot_path) do
+  defp bootstrap_ref_snapshot(module, compile_path, snapshot_path) do
+    Code.prepend_path(compile_path)
+
     if Code.ensure_loaded?(module) and function_exported?(module, :__sprite_refs__, 0) and
          function_exported?(module, :__inline_refs__, 0) do
       snapshot = %{

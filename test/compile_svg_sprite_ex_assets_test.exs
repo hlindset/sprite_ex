@@ -425,6 +425,74 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
     assert File.exists?(Ref.sheet_build_path("alerts", sprite_build_path))
   end
 
+  test "compile_sprite_artifacts!/1 keeps runtime data when manifest is present and one snapshot is missing" do
+    source_dir = unique_tmp_dir!("source-dir")
+    compile_path = unique_tmp_dir!("compile-path")
+    sprite_build_path = unique_tmp_dir!("sprite-build-path")
+    manifest_path = elixir_manifest_path!(source_dir)
+    compiler_manifest_path = compiler_manifest_path(manifest_path)
+    runtime_data_path = runtime_data_path(manifest_path)
+    sprite_module = unique_module(:manifest_sprite_fixture)
+    inline_module = unique_module(:manifest_inline_fixture)
+
+    write_sprite_fixture_module!(source_dir, sprite_module, sheet: "alerts")
+    write_inline_fixture_module!(source_dir, inline_module, name: "regular/xmark")
+
+    assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
+
+    assert :ok =
+             SvgSpriteExAssets.compile_sprite_artifacts!(
+               compile_path: compile_path,
+               compiler_state_path: compiler_state_path(manifest_path),
+               compiler_manifest_path: compiler_manifest_path,
+               elixir_manifest_path: manifest_path,
+               runtime_data_path: runtime_data_path,
+               build_path: sprite_build_path,
+               public_path: Config.public_path!(),
+               source_root: Config.source_root!()
+             )
+
+    assert File.exists?(compiler_manifest_path)
+    assert tracked_ref_snapshots_bootstrapped(compiler_manifest_path)
+    File.rm!(ref_snapshot_path(manifest_path, inline_module))
+    refute File.exists?(ref_snapshot_path(manifest_path, inline_module))
+
+    assert :ok =
+             SvgSpriteExAssets.compile_sprite_artifacts!(
+               compile_path: compile_path,
+               compiler_state_path: compiler_state_path(manifest_path),
+               compiler_manifest_path: compiler_manifest_path,
+               elixir_manifest_path: manifest_path,
+               runtime_data_path: runtime_data_path,
+               build_path: sprite_build_path,
+               public_path: Config.public_path!(),
+               source_root: Config.source_root!()
+             )
+
+    assert File.exists?(runtime_data_path)
+    assert File.exists?(Ref.sheet_build_path("alerts", sprite_build_path))
+    assert File.exists?(ref_snapshot_path(manifest_path, inline_module))
+
+    runtime_data = read_runtime_data!(runtime_data_path)
+    assert Map.has_key?(runtime_data.inline_assets, "regular/xmark")
+    assert Enum.any?(runtime_data.sprite_sheets, &(&1.name == "alerts"))
+    refute tracked_ref_snapshots_bootstrapped(compiler_manifest_path)
+
+    assert :ok =
+             SvgSpriteExAssets.compile_sprite_artifacts!(
+               compile_path: compile_path,
+               compiler_state_path: compiler_state_path(manifest_path),
+               compiler_manifest_path: compiler_manifest_path,
+               elixir_manifest_path: manifest_path,
+               runtime_data_path: runtime_data_path,
+               build_path: sprite_build_path,
+               public_path: Config.public_path!(),
+               source_root: Config.source_root!()
+             )
+
+    assert tracked_ref_snapshots_bootstrapped(compiler_manifest_path)
+  end
+
   test "compile_sprite_artifacts!/1 only removes manifest-tracked sprite outputs" do
     source_dir = unique_tmp_dir!("source-dir")
     compile_path = unique_tmp_dir!("compile-path")
@@ -1032,6 +1100,17 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
 
       {:error, :enoent} ->
         nil
+    end
+  end
+
+  defp tracked_ref_snapshots_bootstrapped(path) do
+    case File.read(path) do
+      {:ok, binary} ->
+        :erlang.binary_to_term(binary, [:safe])
+        |> Map.get(:ref_snapshots_bootstrapped, false)
+
+      {:error, :enoent} ->
+        false
     end
   end
 
