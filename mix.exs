@@ -17,7 +17,11 @@ defmodule SvgSpriteEx.MixProject do
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      test_coverage: [tool: ExCoveralls]
+      test_coverage: [tool: ExCoveralls],
+      aliases: [
+        tidewave:
+          "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4000) end)'"
+      ]
     ]
   end
 
@@ -49,7 +53,9 @@ defmodule SvgSpriteEx.MixProject do
       {:floki, "~> 0.38", only: :test},
       {:excoveralls, "~> 0.18", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false}
+      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
+      {:tidewave, "> 0.0.0", only: :dev},
+      {:bandit, "> 0.0.0", only: :dev}
     ]
   end
 
