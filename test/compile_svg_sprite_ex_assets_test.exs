@@ -321,11 +321,14 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
 
   test "after_elixir_callback/1 writes runtime data before compile.app completes" do
     source_dir = unique_tmp_dir!("source-dir")
-    compile_path = unique_tmp_dir!("compile-path")
+    app_path = unique_tmp_dir!("app-path")
+    compile_path = Path.join(app_path, "ebin")
     sprite_build_path = unique_tmp_dir!("sprite-build-path")
     manifest_path = elixir_manifest_path!(source_dir)
     compiler_manifest_path = compiler_manifest_path(manifest_path)
-    runtime_data_path = runtime_data_path(manifest_path)
+    runtime_data_path = Path.join(app_path, "priv/svg_sprite_ex/runtime_data.etf")
+
+    File.mkdir_p!(compile_path)
 
     write_inline_fixture_module!(source_dir, unique_module(:app_order_inline_fixture),
       name: "regular/xmark"
