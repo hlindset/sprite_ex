@@ -383,18 +383,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   defp write_sprite_sheets(sprite_builds) do
     sprite_builds
     |> Enum.map(fn {output_path, sprite_sheet} ->
-      current_sprite =
-        case File.read(output_path) do
-          {:ok, contents} -> contents
-          {:error, :enoent} -> nil
-        end
-
-      if current_sprite == sprite_sheet do
-        :noop
-      else
-        File.write!(output_path, sprite_sheet)
-        :ok
-      end
+      write_if_changed(output_path, sprite_sheet)
     end)
     |> changed()
   end
@@ -612,9 +601,24 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
       :noop
     else
       File.mkdir_p!(Path.dirname(path))
-      File.write!(path, contents)
+      write_atomically!(path, contents)
       :ok
     end
+  end
+
+  defp write_atomically!(path, contents) do
+    temp_path = temp_write_path(path)
+
+    try do
+      File.write!(temp_path, contents)
+      File.rename!(temp_path, path)
+    after
+      File.rm(temp_path)
+    end
+  end
+
+  defp temp_write_path(path) do
+    "#{path}.tmp-#{System.unique_integer([:positive, :monotonic])}"
   end
 
   defp rm_if_exists(path) do

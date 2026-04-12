@@ -226,10 +226,21 @@ defmodule SvgSpriteEx.Ref do
       File.rm(snapshot_path)
     else
       File.mkdir_p!(Path.dirname(snapshot_path))
-      File.write!(snapshot_path, :erlang.term_to_binary(snapshot))
+      write_atomically!(snapshot_path, :erlang.term_to_binary(snapshot))
     end
 
     :ok
+  end
+
+  defp write_atomically!(path, contents) do
+    temp_path = "#{path}.tmp-#{System.unique_integer([:positive, :monotonic])}"
+
+    try do
+      File.write!(temp_path, contents)
+      File.rename!(temp_path, path)
+    after
+      File.rm(temp_path)
+    end
   end
 
   defp build_sprite_ref_ast(name, opts, caller) do

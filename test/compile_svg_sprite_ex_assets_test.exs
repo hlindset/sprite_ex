@@ -32,6 +32,8 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
              sprite_refs: [],
              inline_refs: ["regular/xmark"]
            } = read_ref_snapshot!(ref_snapshot_path(manifest_path, inline_module))
+
+    assert temp_artifact_paths(compiler_state_path(manifest_path)) == []
   end
 
   test "after_elixir_callback/1 compiles sprite artifacts when elixir reports ok" do
@@ -423,6 +425,8 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
     assert File.exists?(ref_snapshot_path(manifest_path, inline_module))
     assert File.exists?(runtime_data_path)
     assert File.exists?(Ref.sheet_build_path("alerts", sprite_build_path))
+    assert temp_artifact_paths(compiler_state_path(manifest_path)) == []
+    assert temp_artifact_paths(sprite_build_path) == []
   end
 
   test "compile_sprite_artifacts!/1 keeps runtime data when manifest is present and one snapshot is missing" do
@@ -1124,6 +1128,16 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
     path
     |> File.read!()
     |> :erlang.binary_to_term([:safe])
+  end
+
+  defp temp_artifact_paths(root) do
+    [
+      Path.join(root, "*.tmp-*"),
+      Path.join(root, "**/*.tmp-*")
+    ]
+    |> Enum.flat_map(&Path.wildcard/1)
+    |> Enum.uniq()
+    |> Enum.sort()
   end
 
   defp write_legacy_manifest!(path, artifact_paths) do
