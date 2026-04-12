@@ -16,6 +16,8 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   alias SvgSpriteEx.SpriteSheet
   alias SvgSpriteEx.SpriteSheetMeta
 
+  @ref_snapshot_vsn Ref.ref_snapshot_vsn()
+
   @impl Mix.Task.Compiler
   def run(_args) do
     register_after_elixir_hook(default_compile_opts())
@@ -540,11 +542,8 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
     if Code.ensure_loaded?(module) and function_exported?(module, :__sprite_refs__, 0) and
          function_exported?(module, :__inline_refs__, 0) do
-      snapshot = %{
-        module: module,
-        sprite_refs: module.__sprite_refs__() |> Enum.uniq() |> Enum.sort(),
-        inline_refs: module.__inline_refs__() |> Enum.uniq() |> Enum.sort()
-      }
+      snapshot =
+        Ref.build_ref_snapshot(module, module.__sprite_refs__(), module.__inline_refs__())
 
       {snapshot, write_ref_snapshot(snapshot_path, snapshot)}
     else
@@ -556,9 +555,19 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
     case File.read(path) do
       {:ok, binary} ->
         case :erlang.binary_to_term(binary, [:safe]) do
-          %{module: module, sprite_refs: sprite_refs, inline_refs: inline_refs} = snapshot
-          when is_atom(module) and is_list(sprite_refs) and is_list(inline_refs) ->
+          %{
+            vsn: vsn,
+            module: module,
+            sprite_refs: sprite_refs,
+            inline_refs: inline_refs
+          } = snapshot
+          when vsn == @ref_snapshot_vsn and is_atom(module) and is_list(sprite_refs) and
+                 is_list(inline_refs) ->
             {:ok, snapshot}
+
+          %{module: module, sprite_refs: sprite_refs, inline_refs: inline_refs}
+          when is_atom(module) and is_list(sprite_refs) and is_list(inline_refs) ->
+            :missing
 
           _other ->
             raise Mix.Error, message: "invalid svg_sprite_ex ref snapshot: #{path}"

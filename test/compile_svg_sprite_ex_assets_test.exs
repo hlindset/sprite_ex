@@ -22,12 +22,14 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
     assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
 
     assert %{
+             vsn: 1,
              module: ^sprite_module,
              sprite_refs: [{"alerts", "regular/xmark"}],
              inline_refs: []
            } = read_ref_snapshot!(ref_snapshot_path(manifest_path, sprite_module))
 
     assert %{
+             vsn: 1,
              module: ^inline_module,
              sprite_refs: [],
              inline_refs: ["regular/xmark"]
@@ -495,6 +497,53 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
              )
 
     assert tracked_ref_snapshots_bootstrapped(compiler_manifest_path)
+  end
+
+  test "compile_sprite_artifacts!/1 rewrites legacy ref snapshots to the versioned format" do
+    source_dir = unique_tmp_dir!("source-dir")
+    compile_path = unique_tmp_dir!("compile-path")
+    sprite_build_path = unique_tmp_dir!("sprite-build-path")
+    manifest_path = elixir_manifest_path!(source_dir)
+    compiler_manifest_path = compiler_manifest_path(manifest_path)
+    runtime_data_path = runtime_data_path(manifest_path)
+    sprite_module = unique_module(:legacy_snapshot_sprite_fixture)
+    inline_module = unique_module(:legacy_snapshot_inline_fixture)
+    sprite_snapshot_path = ref_snapshot_path(manifest_path, sprite_module)
+
+    write_sprite_fixture_module!(source_dir, sprite_module, sheet: "alerts")
+    write_inline_fixture_module!(source_dir, inline_module, name: "regular/xmark")
+
+    assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
+
+    write_legacy_ref_snapshot!(sprite_snapshot_path, %{
+      module: sprite_module,
+      sprite_refs: [{"alerts", "regular/xmark"}],
+      inline_refs: []
+    })
+
+    assert :ok =
+             SvgSpriteExAssets.compile_sprite_artifacts!(
+               compile_path: compile_path,
+               compiler_state_path: compiler_state_path(manifest_path),
+               compiler_manifest_path: compiler_manifest_path,
+               elixir_manifest_path: manifest_path,
+               runtime_data_path: runtime_data_path,
+               build_path: sprite_build_path,
+               public_path: Config.public_path!(),
+               source_root: Config.source_root!()
+             )
+
+    assert %{
+             vsn: 1,
+             module: ^sprite_module,
+             sprite_refs: [{"alerts", "regular/xmark"}],
+             inline_refs: []
+           } = read_ref_snapshot!(sprite_snapshot_path)
+
+    runtime_data = read_runtime_data!(runtime_data_path)
+    assert Map.has_key?(runtime_data.inline_assets, "regular/xmark")
+    assert Enum.any?(runtime_data.sprite_sheets, &(&1.name == "alerts"))
+    refute tracked_ref_snapshots_bootstrapped(compiler_manifest_path)
   end
 
   test "compile_sprite_artifacts!/1 only removes manifest-tracked sprite outputs" do
@@ -1142,6 +1191,11 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
 
   defp write_legacy_manifest!(path, artifact_paths) do
     File.write!(path, :erlang.term_to_binary(%{vsn: 1, artifact_paths: artifact_paths}))
+  end
+
+  defp write_legacy_ref_snapshot!(path, snapshot) do
+    File.mkdir_p!(Path.dirname(path))
+    File.write!(path, :erlang.term_to_binary(snapshot))
   end
 
   defp elixir_manifest_path!(source_dir) do

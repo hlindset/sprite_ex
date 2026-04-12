@@ -13,6 +13,7 @@ defmodule SvgSpriteEx.Ref do
   alias SvgSpriteEx.SpriteRef
 
   @inline_registry_module SvgSpriteEx.Generated.InlineIcons
+  @ref_snapshot_vsn 1
 
   @doc false
   defmacro __using__(_opts) do
@@ -174,6 +175,19 @@ defmodule SvgSpriteEx.Ref do
     Path.join([compiler_state_path, "refs", module_hash <> ".term"])
   end
 
+  @doc false
+  def ref_snapshot_vsn, do: @ref_snapshot_vsn
+
+  @doc false
+  def build_ref_snapshot(module, sprite_refs, inline_refs) do
+    %{
+      vsn: @ref_snapshot_vsn,
+      module: module,
+      sprite_refs: sprite_refs |> Enum.uniq() |> Enum.sort(),
+      inline_refs: inline_refs |> Enum.uniq() |> Enum.sort()
+    }
+  end
+
   defp normalize_explicit_sheet!(sheet), do: normalize_sheet!(sheet, sheet)
 
   defmacro __before_compile__(env) do
@@ -204,21 +218,16 @@ defmodule SvgSpriteEx.Ref do
   def __after_compile__(env, _bytecode) do
     compiler_state_path = Module.get_attribute(env.module, :svg_sprite_ex_compiler_state_path)
 
-    snapshot = %{
-      module: env.module,
-      sprite_refs:
+    snapshot =
+      build_ref_snapshot(
+        env.module,
         env.module
         |> Module.get_attribute(:__sprite_refs__)
-        |> List.wrap()
-        |> Enum.uniq()
-        |> Enum.sort(),
-      inline_refs:
+        |> List.wrap(),
         env.module
         |> Module.get_attribute(:__inline_refs__)
         |> List.wrap()
-        |> Enum.uniq()
-        |> Enum.sort()
-    }
+      )
 
     snapshot_path = ref_snapshot_path(env.module, compiler_state_path)
 
