@@ -12,7 +12,7 @@ defmodule SvgSpriteEx.Ref do
   alias SvgSpriteEx.Source
   alias SvgSpriteEx.SpriteRef
 
-  @inline_registry_module SvgSpriteEx.Generated.InlineIcons
+  @inline_registry_module SvgSpriteEx.Runtime.InlineIcons
   @ref_snapshot_vsn 1
 
   @doc false

@@ -40,7 +40,7 @@ defmodule SvgSpriteEx.RefTest do
 
     assert %InlineRef{} = ref
     assert ref.name == "regular/xmark"
-    assert ref.registry == SvgSpriteEx.Generated.InlineIcons
+    assert ref.registry == SvgSpriteEx.Runtime.InlineIcons
     assert module.__inline_refs__() == ["regular/xmark"]
   end
 

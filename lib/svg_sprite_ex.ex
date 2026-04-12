@@ -20,9 +20,9 @@ defmodule SvgSpriteEx do
   alias SvgSpriteEx.SpriteMeta
   alias SvgSpriteEx.SpriteRef
 
-  @inline_registry_module SvgSpriteEx.Generated.InlineIcons
-  @sprite_sheet_registry_module SvgSpriteEx.Generated.SpriteSheets
-  @inline_svg_registry_module SvgSpriteEx.Generated.InlineSvgs
+  @inline_registry_module SvgSpriteEx.Runtime.InlineIcons
+  @sprite_sheet_registry_module SvgSpriteEx.Runtime.SpriteSheets
+  @inline_svg_registry_module SvgSpriteEx.Runtime.InlineSvgs
 
   @doc ~S'''
   Imports the SvgSpriteEx component and compile-time ref helpers into the caller.
