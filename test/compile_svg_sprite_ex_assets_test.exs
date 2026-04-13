@@ -411,7 +411,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
     refute File.exists?(sheet_path)
   end
 
-  test "compile_sprite_artifacts!/1 raises when a ref snapshot is missing" do
+  test "compile_sprite_artifacts!/1 rebuilds from live module refs when a snapshot is missing" do
     source_dir = unique_tmp_dir!("source-dir")
     compile_path = unique_tmp_dir!("compile-path")
     sprite_build_path = unique_tmp_dir!("sprite-build-path")
@@ -426,8 +426,8 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
 
     File.rm!(ref_snapshot_path(manifest_path, inline_module))
 
-    assert_raise Mix.Error, ~r/missing or outdated.*mix clean/, fn ->
-      SvgSpriteExAssets.compile_sprite_artifacts!(
+    assert :ok =
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_state_path: compiler_state_path(manifest_path),
                compiler_manifest_path: compiler_manifest_path(manifest_path),
@@ -437,10 +437,12 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
                public_path: Config.public_path!(),
                source_root: Config.source_root!()
              )
-    end
+
+    assert File.exists?(Ref.sheet_build_path("alerts", sprite_build_path))
+    assert File.exists?(runtime_data_path(manifest_path))
   end
 
-  test "compile_sprite_artifacts!/1 raises when a ref snapshot is from an older version" do
+  test "compile_sprite_artifacts!/1 rebuilds from live module refs when a snapshot is from an older version" do
     source_dir = unique_tmp_dir!("source-dir")
     compile_path = unique_tmp_dir!("compile-path")
     sprite_build_path = unique_tmp_dir!("sprite-build-path")
@@ -460,8 +462,8 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
       inline_refs: []
     })
 
-    assert_raise Mix.Error, ~r/missing or outdated.*mix clean/, fn ->
-      SvgSpriteExAssets.compile_sprite_artifacts!(
+    assert :ok =
+             SvgSpriteExAssets.compile_sprite_artifacts!(
                compile_path: compile_path,
                compiler_state_path: compiler_state_path(manifest_path),
                compiler_manifest_path: compiler_manifest_path(manifest_path),
@@ -471,7 +473,9 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
                public_path: Config.public_path!(),
                source_root: Config.source_root!()
              )
-    end
+
+    assert File.exists?(Ref.sheet_build_path("alerts", sprite_build_path))
+    assert File.exists?(runtime_data_path(manifest_path))
   end
 
   test "compile_sprite_artifacts!/1 only removes manifest-tracked sprite outputs" do

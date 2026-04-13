@@ -17,8 +17,6 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   alias SvgSpriteEx.SpriteSheet
   alias SvgSpriteEx.SpriteSheetMeta
 
-  @ref_snapshot_vsn Ref.ref_snapshot_vsn()
-
   @impl Mix.Task.Compiler
   def run(_args) do
     register_after_elixir_hook(default_compile_opts())
@@ -176,14 +174,10 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
        ) do
     Code.prepend_path(compile_path)
 
-    snapshots =
-      modules
-      |> project_ref_modules()
-      |> Enum.map(&read_ref_snapshot!(&1, compiler_state_path))
+    ref_modules = project_ref_modules(modules)
 
     active_snapshot_paths =
-      snapshots
-      |> Enum.map(&Ref.ref_snapshot_path(&1.module, compiler_state_path))
+      Enum.map(ref_modules, &Ref.ref_snapshot_path(&1, compiler_state_path))
 
     stale_snapshot_result =
       compiler_state_path
@@ -193,14 +187,14 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
       |> cleanup_artifact_paths()
 
     sprite_refs =
-      snapshots
-      |> Enum.flat_map(& &1.sprite_refs)
+      ref_modules
+      |> Enum.flat_map(& &1.__sprite_refs__())
       |> Enum.uniq()
       |> Enum.sort()
 
     inline_refs =
-      snapshots
-      |> Enum.flat_map(& &1.inline_refs)
+      ref_modules
+      |> Enum.flat_map(& &1.__inline_refs__())
       |> Enum.uniq()
       |> Enum.sort()
 
@@ -461,46 +455,6 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
     paths
     |> Enum.map(&rm_if_exists/1)
     |> changed()
-  end
-
-  defp read_ref_snapshot!(module, compiler_state_path) do
-    snapshot_path = Ref.ref_snapshot_path(module, compiler_state_path)
-
-    snapshot =
-      case File.read(snapshot_path) do
-        {:ok, binary} ->
-          case :erlang.binary_to_term(binary, [:safe]) do
-            %{
-              vsn: vsn,
-              module: snapshot_module,
-              sprite_refs: sprite_refs,
-              inline_refs: inline_refs
-            } = snapshot
-            when vsn == @ref_snapshot_vsn and is_atom(snapshot_module) and is_list(sprite_refs) and
-                   is_list(inline_refs) ->
-              snapshot
-
-            _other ->
-              raise_missing_or_outdated_snapshot!(module, snapshot_path, compiler_state_path)
-          end
-
-        {:error, :enoent} ->
-          raise_missing_or_outdated_snapshot!(module, snapshot_path, compiler_state_path)
-      end
-
-    if snapshot.module == module do
-      snapshot
-    else
-      raise Mix.Error,
-        message: "invalid svg_sprite_ex ref snapshot for #{inspect(module)} at #{snapshot_path}"
-    end
-  end
-
-  defp raise_missing_or_outdated_snapshot!(module, snapshot_path, compiler_state_path) do
-    raise Mix.Error,
-      message:
-        "svg_sprite_ex ref snapshot for #{inspect(module)} is missing or outdated at #{snapshot_path}. " <>
-          "Run `mix clean` or delete #{compiler_state_path} and recompile."
   end
 
   defp project_ref_modules(modules) do

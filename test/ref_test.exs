@@ -43,14 +43,24 @@ defmodule SvgSpriteEx.RefTest do
     assert module.__inline_refs__() == ["regular/xmark"]
   end
 
-  test "inline_ref does not track the source file as an external resource" do
-    module = unique_module(:inline_without_external_resource)
+  test "sprite_ref tracks the source file as an external resource" do
+    module = unique_module(:sprite_with_external_resource)
+
+    compile_module!(module, """
+    def ref, do: sprite_ref("regular/xmark")
+    """)
+
+    assert Path.join(Config.source_root!(), "regular/xmark.svg") in module_external_resources(module)
+  end
+
+  test "inline_ref tracks the source file as an external resource" do
+    module = unique_module(:inline_with_external_resource)
 
     compile_module!(module, """
     def ref, do: inline_ref("regular/xmark")
     """)
 
-    refute Enum.any?(module_external_resources(module))
+    assert Path.join(Config.source_root!(), "regular/xmark.svg") in module_external_resources(module)
   end
 
   test "sheet path helpers normalize sheet names" do

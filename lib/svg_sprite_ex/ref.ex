@@ -265,6 +265,7 @@ defmodule SvgSpriteEx.Ref do
 
     literal_opts = expand_literal_opts!(opts, caller)
     normalized_name = expand_literal_name!(literal_name, caller, source_root)
+    source_file_path = Source.source_file_path!(normalized_name, source_root)
 
     normalized_sheet =
       expand_literal_sheet!(Keyword.get(literal_opts, :sheet), caller, default_sheet)
@@ -277,7 +278,13 @@ defmodule SvgSpriteEx.Ref do
         href: sprite_href_from_normalized(normalized_name, normalized_sheet, public_path)
       }
 
-    register_sprite_ref!(caller.module, normalized_name, normalized_sheet, source_root)
+    register_sprite_ref!(
+      caller.module,
+      normalized_name,
+      normalized_sheet,
+      source_root,
+      source_file_path
+    )
 
     quote do
       %SvgSpriteEx.SpriteRef{
@@ -300,7 +307,8 @@ defmodule SvgSpriteEx.Ref do
       )
 
     normalized_name = expand_literal_name!(literal_name, caller, source_root)
-    register_inline_ref!(caller.module, normalized_name, source_root)
+    source_file_path = Source.source_file_path!(normalized_name, source_root)
+    register_inline_ref!(caller.module, normalized_name, source_root, source_file_path)
 
     quote do
       %SvgSpriteEx.InlineRef{
@@ -382,12 +390,14 @@ defmodule SvgSpriteEx.Ref do
     end
   end
 
-  defp register_sprite_ref!(module, normalized_name, normalized_sheet, _source_root) do
+  defp register_sprite_ref!(module, normalized_name, normalized_sheet, _source_root, source_file_path) do
     Module.put_attribute(module, :__sprite_refs__, {normalized_sheet, normalized_name})
+    Module.put_attribute(module, :external_resource, source_file_path)
   end
 
-  defp register_inline_ref!(module, normalized_name, _source_root) do
+  defp register_inline_ref!(module, normalized_name, _source_root, source_file_path) do
     Module.put_attribute(module, :__inline_refs__, normalized_name)
+    Module.put_attribute(module, :external_resource, source_file_path)
   end
 
   defp sprite_href_from_normalized(name, normalized_sheet, public_path) do
