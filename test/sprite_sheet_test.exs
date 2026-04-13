@@ -179,6 +179,34 @@ defmodule SvgSpriteEx.SpriteSheetTest do
     assert sprite_sheet =~ ~s|marker-end="url(##{sprite_id}-arrow)"|
   end
 
+  test "build rewrites root svg attributes against namespaced local ids" do
+    svg_source_root = unique_tmp_dir!("root-attrs")
+    File.mkdir_p!(Path.join(svg_source_root, "icons"))
+
+    File.write!(
+      Path.join(svg_source_root, "icons/root_attrs.svg"),
+      """
+      <svg id="root-shape" viewBox="0 0 24 24" clip-path="url(#clipper)">
+        <defs>
+          <clipPath id="clipper">
+            <rect x="0" y="0" width="24" height="24" />
+          </clipPath>
+        </defs>
+        <path d="M0 0h24v24H0z" />
+      </svg>
+      """
+    )
+
+    sprite_sheet = SpriteSheet.build(["icons/root_attrs"], source_root: svg_source_root)
+    sprite_id = Source.sprite_id("icons/root_attrs", svg_source_root)
+
+    assert sprite_sheet =~
+             ~s|<symbol id="#{sprite_id}" viewBox="0 0 24 24" clip-path="url(##{sprite_id}-clipper)"|
+
+    refute sprite_sheet =~ ~s( id="root-shape")
+    assert sprite_sheet =~ ~s(id="#{sprite_id}-clipper")
+  end
+
   test "build rewrites quoted and whitespace-padded local url references" do
     svg_source_root = unique_tmp_dir!("quoted-url-refs")
     File.mkdir_p!(Path.join(svg_source_root, "icons"))
@@ -238,6 +266,35 @@ defmodule SvgSpriteEx.SpriteSheetTest do
     assert sprite_sheet =~ ~s(id="#{sprite_id}-shape")
     assert sprite_sheet =~ ~s(href="##{sprite_id}-shape")
     assert sprite_sheet =~ ~s(xlink:href="##{sprite_id}-shape")
+  end
+
+  test "build rewrites style block selectors and local url references" do
+    svg_source_root = unique_tmp_dir!("style-blocks")
+    File.mkdir_p!(Path.join(svg_source_root, "icons"))
+
+    File.write!(
+      Path.join(svg_source_root, "icons/styled.svg"),
+      """
+      <svg viewBox="0 0 24 24">
+        <defs>
+          <linearGradient id="paint">
+            <stop offset="0%" />
+          </linearGradient>
+        </defs>
+        <style>
+          #shape { fill: url(#paint); }
+        </style>
+        <path id="shape" d="M0 0h24v24H0z" />
+      </svg>
+      """
+    )
+
+    sprite_sheet = SpriteSheet.build(["icons/styled"], source_root: svg_source_root)
+    sprite_id = Source.sprite_id("icons/styled", svg_source_root)
+
+    assert sprite_sheet =~ "##{sprite_id}-shape { fill: url(##{sprite_id}-paint); }"
+    assert sprite_sheet =~ ~s(id="#{sprite_id}-shape")
+    assert sprite_sheet =~ ~s(id="#{sprite_id}-paint")
   end
 
   test "build passes through non-local reference forms unchanged" do

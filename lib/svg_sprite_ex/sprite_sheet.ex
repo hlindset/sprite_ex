@@ -56,10 +56,12 @@ defmodule SvgSpriteEx.SpriteSheet do
        }) do
     view_box = resolve_view_box!(attributes, normalized_name)
     sprite_id = Source.sprite_id_from_normalized(normalized_name)
-    rendered_symbol_attrs = render_symbol_attrs(attributes)
+    id_map = build_local_id_map(attributes, content_nodes, sprite_id)
+    rewritten_attributes = rewrite_symbol_attributes!(attributes, normalized_name, id_map)
+    rendered_symbol_attrs = render_symbol_attrs(rewritten_attributes)
 
     escaped_view_box = escape_xml_attr(view_box)
-    rewritten_content = rewrite_content_nodes!(normalized_name, content_nodes, sprite_id)
+    rewritten_content = rewrite_content_nodes!(normalized_name, content_nodes, id_map)
 
     """
     <symbol id="#{sprite_id}" viewBox="#{escaped_view_box}"#{rendered_symbol_attrs}>
