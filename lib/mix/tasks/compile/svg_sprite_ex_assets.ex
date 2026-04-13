@@ -5,7 +5,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
   @recursive true
   @shortdoc "Builds application SVG sprite sheets"
-  @manifest_vsn 5
+  @manifest_vsn 3
   @compiler_fingerprint_vsn 1
 
   alias SvgSpriteEx.Config
