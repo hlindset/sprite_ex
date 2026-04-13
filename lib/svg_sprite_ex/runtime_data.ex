@@ -156,9 +156,28 @@ defmodule SvgSpriteEx.RuntimeData do
 
   defp read_runtime_data(path) do
     path
-    |> File.read!()
-    |> :erlang.binary_to_term([:safe])
+    |> read_runtime_data_binary!()
+    |> decode_runtime_data!(path)
     |> validate_runtime_data(path)
+  end
+
+  defp read_runtime_data_binary!(path) do
+    case File.read(path) do
+      {:ok, binary} ->
+        binary
+
+      {:error, reason} ->
+        raise ArgumentError,
+              "could not read svg_sprite_ex runtime data at #{path}: #{:file.format_error(reason)}"
+    end
+  end
+
+  defp decode_runtime_data!(binary, path) do
+    :erlang.binary_to_term(binary, [:safe])
+  rescue
+    error in [ArgumentError] ->
+      raise ArgumentError,
+            "could not decode svg_sprite_ex runtime data at #{path}: #{Exception.message(error)}"
   end
 
   defp validate_runtime_data(

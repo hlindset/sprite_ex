@@ -198,6 +198,22 @@ defmodule SvgSpriteEx.MetadataTest do
                  end
   end
 
+  test "runtime metadata reports the offending path when runtime data cannot be decoded" do
+    {_source_dir, _manifest_path, compile_path, _sprite_build_path} = runtime_fixture_paths!()
+
+    runtime_data_path = runtime_data_path(compile_path)
+    File.mkdir_p!(Path.dirname(runtime_data_path))
+    File.write!(runtime_data_path, "not an etf payload")
+
+    setup_runtime_loader!([compile_path])
+
+    assert_raise ArgumentError,
+                 ~r/could not decode svg_sprite_ex runtime data at #{Regex.escape(runtime_data_path)}/,
+                 fn ->
+                   SvgSpriteEx.inline_svgs()
+                 end
+  end
+
   test "runtime metadata rejects duplicate sheet names across app code paths" do
     {source_dir_one, manifest_path_one, compile_path_one, sprite_build_path_one} =
       runtime_fixture_paths!()
