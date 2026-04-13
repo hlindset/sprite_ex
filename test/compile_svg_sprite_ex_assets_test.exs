@@ -940,6 +940,53 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssetsTest do
     assert first_digest != second_digest
   end
 
+  test "compile_sprite_artifacts!/1 normalizes compiler state and runtime data paths in the input digest" do
+    source_dir = unique_tmp_dir!("source-dir")
+    compile_path = unique_tmp_dir!("compile-path")
+    sprite_build_path = unique_tmp_dir!("sprite-build-path")
+    manifest_path = elixir_manifest_path!(source_dir)
+    absolute_compiler_state_path = compiler_state_path(manifest_path)
+    compiler_manifest_path = compiler_manifest_path(manifest_path)
+    absolute_runtime_data_path = runtime_data_path(manifest_path)
+
+    relative_compiler_state_path = Path.relative_to(absolute_compiler_state_path, File.cwd!())
+    relative_runtime_data_path = Path.relative_to(absolute_runtime_data_path, File.cwd!())
+
+    write_inline_fixture_module!(source_dir, unique_module(:path_normalization_fixture),
+      name: "regular/xmark"
+    )
+
+    assert :ok = compile_fixture_modules!(manifest_path, source_dir, compile_path)
+
+    assert :ok =
+             SvgSpriteExAssets.compile_sprite_artifacts!(
+               compile_path: compile_path,
+               compiler_state_path: relative_compiler_state_path,
+               compiler_manifest_path: compiler_manifest_path,
+               elixir_manifest_path: manifest_path,
+               runtime_data_path: relative_runtime_data_path,
+               build_path: sprite_build_path,
+               public_path: Config.public_path!(),
+               source_root: Config.source_root!()
+             )
+
+    first_digest = tracked_input_digest(compiler_manifest_path)
+
+    assert :noop =
+             SvgSpriteExAssets.compile_sprite_artifacts!(
+               compile_path: compile_path,
+               compiler_state_path: absolute_compiler_state_path,
+               compiler_manifest_path: compiler_manifest_path,
+               elixir_manifest_path: manifest_path,
+               runtime_data_path: absolute_runtime_data_path,
+               build_path: sprite_build_path,
+               public_path: Config.public_path!(),
+               source_root: Config.source_root!()
+             )
+
+    assert first_digest == tracked_input_digest(compiler_manifest_path)
+  end
+
   test "compile_sprite_artifacts!/1 noops when the manifest-backed refs are unchanged" do
     source_dir = unique_tmp_dir!("source-dir")
     compile_path = unique_tmp_dir!("compile-path")

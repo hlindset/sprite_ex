@@ -164,9 +164,9 @@ defmodule SvgSpriteEx.Compiler do
       source_root: Path.expand(source_root),
       build_path: Path.expand(build_path),
       public_path: public_path,
-      compiler_state_path: compiler_state_path,
+      compiler_state_path: Path.expand(compiler_state_path),
       compiler_fingerprint: compiler_fingerprint,
-      runtime_data_path: runtime_data_path
+      runtime_data_path: Path.expand(runtime_data_path)
     }
 
     term_digest(digest_input)
