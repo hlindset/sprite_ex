@@ -3,6 +3,8 @@ defmodule SvgSpriteEx.SpriteSheet do
 
   require Record
 
+  alias Phoenix.HTML
+  alias Phoenix.HTML.Safe
   alias SvgSpriteEx.Source
 
   Record.defrecordp(
@@ -94,7 +96,8 @@ defmodule SvgSpriteEx.SpriteSheet do
     else
       details =
         Enum.map_join(collisions, "; ", fn {sprite_id, sprite_sources} ->
-          "#{sprite_id}: #{Enum.join(Enum.map(sprite_sources, & &1.file_path), ", ")}"
+          file_paths = Enum.map_join(sprite_sources, ", ", & &1.file_path)
+          "#{sprite_id}: #{file_paths}"
         end)
 
       raise ArgumentError, "sprite ID collisions detected: #{details}"
@@ -118,7 +121,7 @@ defmodule SvgSpriteEx.SpriteSheet do
 
   defp collect_local_ids([node | rest], acc) do
     acc =
-      if is_tuple(node) and tuple_size(node) > 0 and elem(node, 0) == :xmlElement do
+      if xml_element_node?(node) do
         node
         |> xml_element(:attributes)
         |> collect_ids_from_attributes(acc)
@@ -132,13 +135,10 @@ defmodule SvgSpriteEx.SpriteSheet do
 
   defp collect_ids_from_attributes(attributes, acc) do
     Enum.reduce(attributes, acc, fn attribute, collected_ids ->
-      if attribute_name(attribute) == "id" do
-        case attribute_value(attribute) do
-          "" -> collected_ids
-          value -> MapSet.put(collected_ids, value)
-        end
-      else
-        collected_ids
+      case {attribute_name(attribute), attribute_value(attribute)} do
+        {"id", ""} -> collected_ids
+        {"id", value} -> MapSet.put(collected_ids, value)
+        _ -> collected_ids
       end
     end)
   end
@@ -148,7 +148,7 @@ defmodule SvgSpriteEx.SpriteSheet do
   end
 
   defp rewrite_node!(node, normalized_name, id_map) do
-    if is_tuple(node) and tuple_size(node) > 0 and elem(node, 0) == :xmlElement do
+    if xml_element_node?(node) do
       updated_attributes =
         node
         |> xml_element(:attributes)
@@ -191,11 +191,14 @@ defmodule SvgSpriteEx.SpriteSheet do
   defp rewrite_local_id!("", _normalized_name, _id_map), do: ""
 
   defp rewrite_local_id!(value, normalized_name, id_map) do
-    Map.fetch!(id_map, value)
-  rescue
-    KeyError ->
-      raise ArgumentError,
-            "svg asset #{inspect(normalized_name)} references unknown local id #{inspect(value)}"
+    case Map.fetch(id_map, value) do
+      {:ok, rewritten_id} ->
+        rewritten_id
+
+      :error ->
+        raise ArgumentError,
+              "svg asset #{inspect(normalized_name)} references unknown local id #{inspect(value)}"
+    end
   end
 
   defp rewrite_fragment_href!(value, attr_name, normalized_name, id_map) do
@@ -225,25 +228,12 @@ defmodule SvgSpriteEx.SpriteSheet do
 
   defp rewrite_url_references!(value, attr_name, normalized_name, id_map) do
     if String.contains?(value, "url(") do
-      unsupported_url_references =
-        Regex.replace(@local_url_reference_pattern, value, "")
+      ensure_only_local_url_references!(value, attr_name, normalized_name)
 
-      if String.contains?(unsupported_url_references, "url(") do
-        raise_unsupported_reference!(normalized_name, attr_name, value)
-      end
-
-      rewritten_value =
-        Regex.replace(@local_url_reference_pattern, value, fn _, quote, target ->
-          escaped_quote = if quote == "", do: "", else: quote
-
-          "url(" <>
-            escaped_quote <>
-            "#" <>
-            rewrite_reference_target!(target, attr_name, normalized_name, id_map) <>
-            escaped_quote <> ")"
-        end)
-
-      rewritten_value
+      Regex.replace(@local_url_reference_pattern, value, fn _, quote, target ->
+        rewritten_target = rewrite_reference_target!(target, attr_name, normalized_name, id_map)
+        "url(#{quote}##{rewritten_target}#{quote})"
+      end)
     else
       value
     end
@@ -264,6 +254,15 @@ defmodule SvgSpriteEx.SpriteSheet do
   defp raise_unsupported_reference!(normalized_name, attr_name, value) do
     raise ArgumentError,
           "svg asset #{inspect(normalized_name)} contains an unsupported reference in #{attr_name}: #{inspect(value)}"
+  end
+
+  defp ensure_only_local_url_references!(value, attr_name, normalized_name) do
+    unsupported_url_references =
+      Regex.replace(@local_url_reference_pattern, value, "")
+
+    if String.contains?(unsupported_url_references, "url(") do
+      raise_unsupported_reference!(normalized_name, attr_name, value)
+    end
   end
 
   defp render_content_nodes(nodes) do
@@ -292,10 +291,14 @@ defmodule SvgSpriteEx.SpriteSheet do
     |> IO.iodata_to_binary()
   end
 
+  defp xml_element_node?(node) do
+    is_tuple(node) and tuple_size(node) > 0 and elem(node, 0) == :xmlElement
+  end
+
   defp escape_xml_attr(value) do
     value
-    |> Phoenix.HTML.html_escape()
-    |> Phoenix.HTML.Safe.to_iodata()
+    |> HTML.html_escape()
+    |> Safe.to_iodata()
     |> IO.iodata_to_binary()
   end
 end

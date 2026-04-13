@@ -7,10 +7,11 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   @shortdoc "Builds application SVG sprite sheets"
   @manifest_vsn 3
 
+  alias Mix.Task.Compiler, as: TaskCompiler
   alias SvgSpriteEx.Config
-  alias SvgSpriteEx.RuntimeData
   alias SvgSpriteEx.InlineSvgMeta
   alias SvgSpriteEx.Ref
+  alias SvgSpriteEx.RuntimeData
   alias SvgSpriteEx.Source
   alias SvgSpriteEx.SpriteMeta
   alias SvgSpriteEx.SpriteSheet
@@ -24,7 +25,7 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
   @doc false
   def register_after_elixir_hook(opts) do
-    Mix.Task.Compiler.after_compiler(:elixir, after_elixir_callback(opts))
+    TaskCompiler.after_compiler(:elixir, after_elixir_callback(opts))
   end
 
   @doc false
@@ -370,13 +371,11 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   end
 
   defp compiler_manifest_path(compiler_state_path) do
-    compiler_state_path
-    |> Path.join("compile.svg_sprite_ex_assets")
+    Path.join(compiler_state_path, "compile.svg_sprite_ex_assets")
   end
 
   defp runtime_data_path do
-    Mix.Project.app_path()
-    |> Path.join("priv/svg_sprite_ex/runtime_data.etf")
+    Path.join(Mix.Project.app_path(), "priv/svg_sprite_ex/runtime_data.etf")
   end
 
   defp ref_snapshots_path(compiler_state_path) do
@@ -425,12 +424,11 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
 
   defp write_compiler_manifest(path, artifact_paths, input_digest) do
     manifest =
-      %{
+      :erlang.term_to_binary(%{
         vsn: @manifest_vsn,
         artifact_paths: artifact_paths,
         input_digest: input_digest
-      }
-      |> :erlang.term_to_binary()
+      })
 
     write_if_changed(path, manifest)
   end
@@ -553,7 +551,6 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
   end
 
   defp elixir_manifest_path do
-    Mix.Tasks.Compile.Elixir.manifests()
-    |> List.first()
+    List.first(Mix.Tasks.Compile.Elixir.manifests())
   end
 end

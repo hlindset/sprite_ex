@@ -264,8 +264,9 @@ defmodule SvgSpriteEx.Ref do
       )
 
     literal_opts = expand_literal_opts!(opts, caller)
-    normalized_name = expand_literal_name!(literal_name, caller, source_root)
-    source_file_path = Source.source_file_path!(normalized_name, source_root)
+
+    {normalized_name, source_file_path} =
+      resolve_registered_source!(literal_name, caller, source_root)
 
     normalized_sheet =
       expand_literal_sheet!(Keyword.get(literal_opts, :sheet), caller, default_sheet)
@@ -306,8 +307,9 @@ defmodule SvgSpriteEx.Ref do
         "inline_ref/1 only accepts compile-time literal string asset names"
       )
 
-    normalized_name = expand_literal_name!(literal_name, caller, source_root)
-    source_file_path = Source.source_file_path!(normalized_name, source_root)
+    {normalized_name, source_file_path} =
+      resolve_registered_source!(literal_name, caller, source_root)
+
     register_inline_ref!(caller.module, normalized_name, source_root, source_file_path)
 
     quote do
@@ -326,6 +328,12 @@ defmodule SvgSpriteEx.Ref do
       reraise CompileError,
               [file: caller.file, line: caller.line, description: Exception.message(error)],
               __STACKTRACE__
+  end
+
+  defp resolve_registered_source!(name, caller, source_root) do
+    normalized_name = expand_literal_name!(name, caller, source_root)
+    source_file_path = Source.source_file_path!(normalized_name, source_root)
+    {normalized_name, source_file_path}
   end
 
   defp expand_literal_string!(value, caller, message) do

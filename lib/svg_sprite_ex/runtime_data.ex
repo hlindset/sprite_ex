@@ -72,8 +72,21 @@ defmodule SvgSpriteEx.RuntimeData do
   end
 
   defp merge_runtime_data(file_data, path, merged_data) do
-    inline_sources = register_inline_sources!(merged_data.inline_sources, file_data, path)
-    sheet_sources = register_sheet_sources!(merged_data.sheet_sources, file_data, path)
+    inline_sources =
+      register_named_sources!(
+        merged_data.inline_sources,
+        inline_names(file_data),
+        path,
+        &raise_duplicate_inline_error!/3
+      )
+
+    sheet_sources =
+      register_named_sources!(
+        merged_data.sheet_sources,
+        sheet_names(file_data),
+        path,
+        &raise_duplicate_sheet_error!/3
+      )
 
     %{
       merged_data
@@ -108,29 +121,13 @@ defmodule SvgSpriteEx.RuntimeData do
     }
   end
 
-  defp register_sheet_sources!(sheet_sources, file_data, path) do
-    file_data
-    |> sheet_names()
-    |> Enum.reduce(sheet_sources, fn sheet, acc ->
-      case acc do
-        %{^sheet => existing_path} ->
-          raise_duplicate_sheet_error!(sheet, existing_path, path)
+  defp register_named_sources!(sources, names, path, raise_duplicate_error) do
+    Enum.reduce(names, sources, fn name, acc ->
+      case Map.fetch(acc, name) do
+        {:ok, existing_path} ->
+          raise_duplicate_error.(name, existing_path, path)
 
-        %{} ->
-          Map.put(acc, sheet, path)
-      end
-    end)
-  end
-
-  defp register_inline_sources!(inline_sources, file_data, path) do
-    file_data
-    |> inline_names()
-    |> Enum.reduce(inline_sources, fn name, acc ->
-      case acc do
-        %{^name => existing_path} ->
-          raise_duplicate_inline_error!(name, existing_path, path)
-
-        %{} ->
+        :error ->
           Map.put(acc, name, path)
       end
     end)
