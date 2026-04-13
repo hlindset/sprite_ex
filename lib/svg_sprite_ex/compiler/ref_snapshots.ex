@@ -36,9 +36,8 @@ defmodule SvgSpriteEx.Compiler.RefSnapshots do
     else
       File.mkdir_p!(Path.dirname(snapshot_path))
       FileOps.write_atomically!(snapshot_path, :erlang.term_to_binary(snapshot))
+      :ok
     end
-
-    :ok
   end
 
   def collect_project_refs(compile_path, compiler_state_path, modules) do
