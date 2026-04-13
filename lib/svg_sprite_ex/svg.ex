@@ -14,6 +14,7 @@ defmodule SvgSpriteEx.Svg do
 
   use Phoenix.Component
 
+  alias SvgSpriteEx.Config
   alias SvgSpriteEx.InlineAsset
   alias SvgSpriteEx.InlineRef
   alias SvgSpriteEx.RuntimeData
@@ -41,6 +42,7 @@ defmodule SvgSpriteEx.Svg do
   """
   def svg(%{ref: %SpriteRef{}} = assigns) do
     assigns
+    |> assign(:href, resolve_sprite_href!(assigns.ref))
     |> assign(:svg_attrs, assigns.rest)
     |> sprite_svg()
   end
@@ -65,7 +67,7 @@ defmodule SvgSpriteEx.Svg do
   defp sprite_svg(assigns) do
     ~H"""
     <svg {@svg_attrs}>
-      <use href={@ref.href} />
+      <use href={@href} />
     </svg>
     """
   end
@@ -118,5 +120,19 @@ defmodule SvgSpriteEx.Svg do
         raise ArgumentError,
               "inline svg runtime data returned an invalid result for #{inspect(name)}: #{inspect(other)}"
     end
+  end
+
+  defp resolve_sprite_href!(%SpriteRef{
+         sheet_public_path: sheet_public_path,
+         sprite_id: sprite_id
+       })
+       when is_binary(sheet_public_path) and sheet_public_path != "" and is_binary(sprite_id) and
+              sprite_id != "" do
+    Config.resolve_public_path!(sheet_public_path) <> "#" <> sprite_id
+  end
+
+  defp resolve_sprite_href!(%SpriteRef{} = ref) do
+    raise ArgumentError,
+          "sprite ref #{inspect(ref)} is missing sheet_public_path or sprite_id"
   end
 end

@@ -100,8 +100,8 @@ defmodule SvgSpriteEx do
     %SpriteRef{
       name: sprite_meta.name,
       sheet: sprite_meta.sheet,
-      sprite_id: sprite_meta.sprite_id,
-      href: sprite_meta.href
+      sheet_public_path: sprite_meta.sheet_public_path,
+      sprite_id: sprite_meta.sprite_id
     }
   end
 

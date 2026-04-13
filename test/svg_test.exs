@@ -11,6 +11,10 @@ defmodule SvgSpriteEx.SvgTest do
 
   @runtime_data_cache_key {SvgSpriteEx.RuntimeData, :runtime_data}
 
+  defmodule StaticPathResolver do
+    def static_path(path), do: "/digested#{path}?vsn=123"
+  end
+
   test "loads the module" do
     assert Code.ensure_loaded?(SvgSpriteEx)
   end
@@ -73,6 +77,23 @@ defmodule SvgSpriteEx.SvgTest do
 
     assert sprite_html =~ "<use href="
     assert inline_html =~ "<path"
+  end
+
+  test "svg/1 resolves sprite sheet hrefs through the configured static path resolver" do
+    previous_resolver = Application.get_env(:svg_sprite_ex, :static_path_resolver)
+    Application.put_env(:svg_sprite_ex, :static_path_resolver, StaticPathResolver)
+
+    on_exit(fn ->
+      if is_nil(previous_resolver) do
+        Application.delete_env(:svg_sprite_ex, :static_path_resolver)
+      else
+        Application.put_env(:svg_sprite_ex, :static_path_resolver, previous_resolver)
+      end
+    end)
+
+    html = render_component(&sprite_wrapper/1, %{})
+
+    assert html =~ ~s(<use href="/digested/assets/sprites/sprites.svg?vsn=123#)
   end
 
   test "svg/1 raises when ref is missing" do

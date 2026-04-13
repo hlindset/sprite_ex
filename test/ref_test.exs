@@ -21,7 +21,7 @@ defmodule SvgSpriteEx.RefTest do
 
     assert %SpriteRef{} = ref
     assert ref.sheet == "ui_actions"
-    assert ref.href == "/assets/sprites/ui_actions.svg##{ref.sprite_id}"
+    assert ref.sheet_public_path == "/assets/sprites/ui_actions.svg"
     assert module.__sprite_refs__() == [{"ui_actions", "regular/xmark"}]
   end
 
@@ -50,7 +50,9 @@ defmodule SvgSpriteEx.RefTest do
     def ref, do: sprite_ref("regular/xmark")
     """)
 
-    assert Path.join(Config.source_root!(), "regular/xmark.svg") in module_external_resources(module)
+    assert Path.join(Config.source_root!(), "regular/xmark.svg") in module_external_resources(
+             module
+           )
   end
 
   test "inline_ref tracks the source file as an external resource" do
@@ -60,7 +62,9 @@ defmodule SvgSpriteEx.RefTest do
     def ref, do: inline_ref("regular/xmark")
     """)
 
-    assert Path.join(Config.source_root!(), "regular/xmark.svg") in module_external_resources(module)
+    assert Path.join(Config.source_root!(), "regular/xmark.svg") in module_external_resources(
+             module
+           )
   end
 
   test "sheet path helpers normalize sheet names" do

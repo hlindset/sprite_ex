@@ -221,9 +221,9 @@ defmodule Mix.Tasks.Compile.SvgSpriteExAssets do
           %SpriteMeta{
             name: name,
             sheet: sheet,
+            sheet_public_path: sheet_public_path,
             source_path: Source.source_file_path!(name, source_root),
-            sprite_id: Source.sprite_id_from_normalized(name),
-            href: Ref.sprite_href(name, source_root, sheet, public_path)
+            sprite_id: Source.sprite_id_from_normalized(name)
           }
         end)
 

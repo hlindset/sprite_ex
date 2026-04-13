@@ -274,8 +274,8 @@ defmodule SvgSpriteEx.Ref do
       %SpriteRef{
         name: normalized_name,
         sheet: normalized_sheet,
-        sprite_id: Source.sprite_id_from_normalized(normalized_name),
-        href: sprite_href_from_normalized(normalized_name, normalized_sheet, public_path)
+        sheet_public_path: sheet_public_path_from_normalized(normalized_sheet, public_path),
+        sprite_id: Source.sprite_id_from_normalized(normalized_name)
       }
 
     register_sprite_ref!(
@@ -290,8 +290,8 @@ defmodule SvgSpriteEx.Ref do
       %SvgSpriteEx.SpriteRef{
         name: unquote(ref.name),
         sheet: unquote(ref.sheet),
-        sprite_id: unquote(ref.sprite_id),
-        href: unquote(ref.href)
+        sheet_public_path: unquote(ref.sheet_public_path),
+        sprite_id: unquote(ref.sprite_id)
       }
     end
   end
@@ -390,7 +390,13 @@ defmodule SvgSpriteEx.Ref do
     end
   end
 
-  defp register_sprite_ref!(module, normalized_name, normalized_sheet, _source_root, source_file_path) do
+  defp register_sprite_ref!(
+         module,
+         normalized_name,
+         normalized_sheet,
+         _source_root,
+         source_file_path
+       ) do
     Module.put_attribute(module, :__sprite_refs__, {normalized_sheet, normalized_name})
     Module.put_attribute(module, :external_resource, source_file_path)
   end
@@ -398,10 +404,6 @@ defmodule SvgSpriteEx.Ref do
   defp register_inline_ref!(module, normalized_name, _source_root, source_file_path) do
     Module.put_attribute(module, :__inline_refs__, normalized_name)
     Module.put_attribute(module, :external_resource, source_file_path)
-  end
-
-  defp sprite_href_from_normalized(name, normalized_sheet, public_path) do
-    "#{sheet_public_path_from_normalized(normalized_sheet, public_path)}##{Source.sprite_id_from_normalized(name)}"
   end
 
   defp sheet_build_path_from_normalized(normalized_sheet, build_path) do

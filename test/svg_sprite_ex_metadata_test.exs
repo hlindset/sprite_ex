@@ -38,14 +38,14 @@ defmodule SvgSpriteEx.MetadataTest do
              %SpriteMeta{
                name: "regular/xmark",
                sheet: "ui_actions",
+               sheet_public_path: sheet_public_path,
                source_path: source_path,
-               sprite_id: sprite_id,
-               href: href
+               sprite_id: _sprite_id
              }
            ] = SvgSpriteEx.sprites_in_sheet(:" UI Actions ")
 
     assert source_path == Path.join(Config.source_root!(), "regular/xmark.svg")
-    assert href == "/assets/sprites/ui_actions.svg##{sprite_id}"
+    assert sheet_public_path == "/assets/sprites/ui_actions.svg"
     assert SvgSpriteEx.sprite_sheet("missing") == nil
     assert SvgSpriteEx.sprites_in_sheet("missing") == []
   end
@@ -92,8 +92,8 @@ defmodule SvgSpriteEx.MetadataTest do
     assert %SpriteRef{} = sprite_ref = SvgSpriteEx.to_ref(sprite_meta)
     assert sprite_ref.name == sprite_meta.name
     assert sprite_ref.sheet == sprite_meta.sheet
+    assert sprite_ref.sheet_public_path == sprite_meta.sheet_public_path
     assert sprite_ref.sprite_id == sprite_meta.sprite_id
-    assert sprite_ref.href == sprite_meta.href
 
     assert %InlineRef{} = inline_ref = SvgSpriteEx.to_ref(inline_svg_meta)
     assert inline_ref.name == inline_svg_meta.name

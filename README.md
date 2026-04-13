@@ -72,19 +72,24 @@ config :svg_sprite_ex,
   source_root: Path.expand("../priv/icons", __DIR__),
   build_path: Path.expand("../priv/static/svgs", __DIR__),
   public_path: "/svgs",
-  default_sheet: "sprites"
+  default_sheet: "sprites",
+  static_path_resolver: MyAppWeb.Endpoint
 ```
 
 ### Required configuration
 
 - `source_root` - absolute path to the directory that contains source svg files.
 - `build_path` - absolute path where the compiler generates sprite sheets.
-- `public_path` - public URL prefix for `sprite_ref/1` hrefs.
+- `public_path` - nondigested public URL prefix for generated sprite sheets.
 
 ### Optional configuration
 
 - `default_sheet` - default sprite sheet name when no `sheet` option is
   given. Defaults to `sprites`.
+- `static_path_resolver` - runtime resolver for sprite sheet URLs. This can be
+  a module that exports `static_path/1`, or `{module, function}` /
+  `{module, function, extra_args}`. When omitted, `SvgSpriteEx` renders the
+  configured `public_path` unchanged.
 
 Given the config above, if your svg file lives at
 `priv/icons/regular/xmark.svg`, the logical svg name is `regular/xmark`.
@@ -102,9 +107,14 @@ When you run `mix compile`, the compiler:
 - writes one svg sprite sheet per sheet name into `build_path`
 - writes a runtime data artifact that powers inline svg lookup and metadata APIs
 
-If the compiler encounters a missing or outdated ref snapshot for a module that
-uses `SvgSpriteEx.Ref`, it raises and asks for a clean rebuild instead of trying
-to recover from older snapshot formats.
+Active modules contribute refs directly from their compiled exports, while
+persisted ref snapshots remain on disk for incremental compiler state and stale
+snapshot cleanup.
+
+Generated sprite refs carry the sheet public path and sprite id separately. At
+render time, `<.svg>` resolves the public path through `static_path_resolver`
+when configured, so Phoenix digested asset URLs work without changing
+`sprite_ref(...)` call sites.
 
 Your application must serve the generated files from the same public path you
 configured. For example: Write sprite sheets into `priv/static/svgs`, and
@@ -147,6 +157,9 @@ can also compile svgs to other named sheets:
 ```elixir
 <.svg ref={sprite_ref("regular/xmark", sheet: "dashboard")} class="size-4" />
 ```
+
+When `static_path_resolver` is configured, the rendered `<use href="...">`
+points at the resolved sheet URL plus `#sprite-id`.
 
 ### Render inline svgs
 
